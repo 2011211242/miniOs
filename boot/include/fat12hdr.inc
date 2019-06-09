@@ -7,7 +7,7 @@
 
 ; FAT12 磁盘的头
 ; ----------------------------------------------------------------------
-BS_OEMName	DB 'ForrestY'	; OEM String, 必须 8 个字节
+BS_OEMName	DB 'miniOs86'	; OEM String, 必须 8 个字节
 
 BPB_BytsPerSec	DW 512		; 每扇区字节数
 BPB_SecPerClus	DB 1		; 每簇多少扇区
@@ -40,16 +40,10 @@ SectorNoOfRootDirectory	equ	19	; Root Directory 的第一个扇区号	= BPB_Rsvd
 SectorNoOfFAT1		equ	1	; FAT1 的第一个扇区号	= BPB_RsvdSecCnt
 DeltaSectorNo		equ	17	; DeltaSectorNo = BPB_RsvdSecCnt + (BPB_NumFATs * FATSz) - 2
 					; 文件的开始Sector号 = DirEntry中的开始Sector号 + 根目录占用Sector数目 + DeltaSectorNo
-DispChar:
-    push    ebp
-    mov     ebp, esp
 
-    mov ax, 0B800h
-    mov gs, ax
+; ------------------------------------------------------------------------
+; 关于loader的常量定义
+; ------------------------------------------------------------------------
 
-    mov ah, 0Fh
-    mov al, [ebp + 6]
-    mov [gs:((80 * 0 + 0) * 2)], ax
-
-    pop ebp
-    ret
+BaseOfLoader        equ 09000h
+OffsetOfLoader      equ 0100h 

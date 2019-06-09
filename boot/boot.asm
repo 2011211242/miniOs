@@ -8,69 +8,11 @@
 
 BaseOfStack equ LOADBASE 
 org    LOADBASE 
+
 jmp start
+nop
 
-start:  
-    mov ax, cs
-    mov ds, ax
-    mov es, ax
-    mov ss, ax
-    mov esp, BaseOfStack 
-    mov ebp, esp
-
-    mov cx, 0ffh
-    xor ax, ax
-
-    push 00ah
-    call DispChar
-    add esp, 2
-    
-    push 0008h
-    call DispDw
-    add esp, 2
-
-    push 0ah
-    call DispChar
-    add esp, 2
-
-    push 0009h
-    call DispDw
-    add esp, 2
-
-    push 0ah
-    call DispChar
-    add esp, 2
-
-    push 000ah
-    call DispDw
-    add esp, 2
-
-    push 0ah
-    call DispChar
-    add esp, 2
-
-    push 000bh
-    call DispDw
-    add esp, 2
-
-    push 0ah
-    call DispChar
-    add esp, 2
-    jmp end
-
-loop_begin:
-    push 'A'
-    call DispChar
-    add esp, 2
-
-    push 0ah
-    call DispChar
-    add esp, 2
-    inc ax
-    loop loop_begin
-    
-end:
-    jmp $
+%include "fat12hdr.inc"
 
 
 ;stack resb 32
@@ -177,7 +119,120 @@ DispDw_handle_end:
     ret
 ;end of 打印dw的十六进制数字串
 
-cursor  dw 160 * 0
-row equ 0ah
+Clear_Screen:
+    push    ebp
+    mov     ebp, esp
+
+    push    ax
+    push    cx
+
+    mov     ax, ' ' ;空格
+    sub     esp, 2
+    mov     [esp], ax
+
+    mov     cx, 80 * 25
+
+Clear_Screen_loop:          
+    call    DispChar
+    loop    Clear_Screen_loop
+
+    add     esp, 2
+
+    pop     cx
+    pop     ax
+    pop     ebp
+    ret
+;end of Clear_Screen
+
+DispStr:
+    push    ebp
+    mov     ebp, esp
+
+    push    si
+    push    cx
+    push    bx
+
+    mov     cx, [ebp + 8] 
+    mov     si, [ebp + 6]
+
+DispStr_loop:
+    mov     bx, [si]
+    push    bx
+    call    DispChar
+    inc     si
+    loop    DispStr_loop
+
+    pop     bx
+    pop     cx
+    pop     si 
+    pop     ebp 
+    ret
+; end of DispStr
+
+
+ResetDisk:
+    xor     ah, ah
+    xor     dl, dl
+    int     13h
+    ret
+
+ReadSec:
+    push    ebp
+    mov     ebp, esp
+    push    ax
+    push    cx
+    push    dx
+    push    es
+    push    bx
+
+    mov     ax, [ebp + 6]
+    mov     es, ax
+    mov     bx, [ebp + 8]
+    mov     dx, [ebp + 10]
+    mov     cx, [ebp + 12]
+    mov     ax, [ebp + 14]
+    int     13h
+
+    pop     bx
+    pop     es
+    pop     dx
+    pop     cx
+    pop     ax
+    pop     ebp
+
+    ret
+      
+
+    
+
+
+cursor              dw 160 * 0
+boot_message        dw "boot ..."
+boot_message_len    dw $ - boot_message        
+
+start:  
+    mov ax, cs
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+    mov esp, BaseOfStack 
+    mov ebp, esp
+
+    call Clear_Screen
+
+    sub     esp, 4 
+    mov     ax, [boot_message_len] 
+
+    mov     [esp + 2], ax
+    mov     ax, boot_message 
+    mov     [esp], ax
+
+    call    DispStr
+    add     esp, 4
+end:
+    jmp $
+
 ;times 	2510-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
-dw 	0xaa55				; 结束标志
+;dw 	0xaa55				; 结束标志
+
+

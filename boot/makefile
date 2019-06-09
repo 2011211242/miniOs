@@ -1,7 +1,11 @@
-SRC:=boot.asm
+SRC:=boot.asm \
+	loader.asm
+
 BIN:=$(subst .asm,.com,$(SRC))
 
-.PHONY : everything
+ASMBFLAGS   = -I include/
+
+.PHONY : everything clean
 
 everything : $(BIN)
 	sudo mount -o loop boot.img /mnt/floppy/
@@ -9,5 +13,8 @@ everything : $(BIN)
 	sudo umount /mnt/floppy/
 
 $(BIN) : $(SRC)
-	nasm $< -o $@
+	nasm $(ASMBFLAGS) $< -o $@
+
+clean:
+	rm -rf *.com *.bin
 
