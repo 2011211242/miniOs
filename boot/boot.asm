@@ -159,6 +159,7 @@ DispStr_loop:
     mov     bx, [si]
     push    bx
     call    DispChar
+    pop     bx
     inc     si
     loop    DispStr_loop
 
@@ -205,10 +206,9 @@ ReadSec:
 
     
 
-
 cursor              dw 160 * 0
 boot_message        dw "boot ..."
-boot_message_len    dw $ - boot_message        
+boot_message_len    dw $ - boot_message
 
 start:  
     mov ax, cs
@@ -230,6 +230,8 @@ start:
     call    DispStr
     add     esp, 4
 end:
+    mov ax, 4c00h
+    int 21h
     jmp $
 
 ;times 	2510-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
