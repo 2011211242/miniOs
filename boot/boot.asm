@@ -153,7 +153,8 @@ DispStr:
     push    cx
     push    bx
 
-    mov     cx, [ebp + 8] 
+    mov     cx, [ebp + 12] 
+    mov     es, [ebp + 8]
     mov     si, [ebp + 6]
 
 .DispStr_loop:
@@ -205,8 +206,7 @@ ReadSec:
     and     dh, 1
     mov     dl, [BS_DrvNum]
 
-    mov     ax, [ebp + 8]
-    mov     es, ax
+    mov     es, [ebp + 8]
     mov     ax, [ebp + 10]
     xor     ah, ah
     mov     bx, [ebp + 6]
@@ -243,8 +243,21 @@ ReadDir:
     mov     [esp], ax
 
     call    ReadSec
-
     add     esp, 8
+
+    ;mov     ci, OffsetOfLoader
+    ;sub     esp, 18
+    ;mov     [esp + 12], es 
+    ;mov     [esp + 10], word boot_message        
+    ;mov     ax, [boot_message_len]
+    ;mov     [esp + 8], ax
+
+    ;mov     [esp + 4], es
+    ;mov     [esp + 2], word test_message
+    ;mov     ax, [test_message_len]
+    ;mov     [esp], ax
+    ;call    CmpStr
+
     pop     ax
     pop     ebp
     ret
@@ -277,23 +290,21 @@ DispDebugMessage:
     mov     ebp, esp
     push    ax
 
-    sub     esp, 4 
+    sub     esp, 8 
     mov     ax, [debug_message_len] 
-    mov     [esp + 2], ax
-
+    mov     [esp + 6], ax
+    mov     [esp + 2], es
     mov     ax, debug_message 
     mov     [esp], ax
 
     call    DispStr
-    add     esp, 4
+    add     esp, 8
     call    DispRet
 
     pop     ax
     pop     ebp
     ret
 ;end of DispDebugMessage
-
-
 
 
 ; 比较字符串是否相等
@@ -372,6 +383,8 @@ start:
     mov ebp, esp
 
     call Clear_Screen
+    call    DispDebugMessage
+
     call    ReadDir
 
     sub     esp, 18
@@ -386,14 +399,14 @@ start:
     mov     [esp], ax
     call    CmpStr
 
-    call    DispDebugMessage
+    ;call    DispDebugMessage
     add     esp, 16
-    call    DispDebugMessage
+    ;call    DispDebugMessage
 
     call    DispW
     call    DispRet
 
-   ;push    esp
+    ;push    esp
     ;call    DispW
     ;call    DispRet
 
@@ -402,7 +415,6 @@ start:
     ;push    esp
     ;call    DispW
     ;call    DispRet
-
 end:
     mov ax, 4c00h
     int 21h
