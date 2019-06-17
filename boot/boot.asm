@@ -1,5 +1,3 @@
-%define _BOOT_DEBUG_
-
 %ifdef _BOOT_DEBUG_
     LOADBASE equ 0100h
 %else
@@ -152,11 +150,13 @@ DispStr:
     push    si
     push    cx
     push    bx
+    ;push    es
 
     mov     cx, [ebp + 12] 
-    mov     es, [ebp + 8]
+    ;mov     es, [ebp + 8]
     mov     si, [ebp + 6]
 
+    ;xor     bh, bh
 .DispStr_loop:
     mov     bx, [si]
     push    bx
@@ -165,6 +165,7 @@ DispStr:
     inc     si
     loop    .DispStr_loop
 
+    ;pop     es
     pop     bx
     pop     cx
     pop     si 
@@ -193,7 +194,7 @@ ReadSec:
     push    es
     push    bx
     
-    mov     ax, [ebp + 12]          ;起始扇区
+    mov     ax, [ebp + 14]          ;起始扇区
     mov     bl, [BPB_SecPerTrk]
     div     bl
 
@@ -207,7 +208,7 @@ ReadSec:
     mov     dl, [BS_DrvNum]
 
     mov     es, [ebp + 8]
-    mov     ax, [ebp + 10]
+    mov     ax, [ebp + 12]
     xor     ah, ah
     mov     bx, [ebp + 6]
 .GoOnReading:
@@ -229,21 +230,13 @@ ReadDir:
     mov     ebp, esp
     push    ax
 
-    sub     esp, 8
-    mov     ax, SectorNoOfRootDirectory
-    mov     [esp + 6], ax
-
-    mov     ax, RootDirSectors		
-    mov     [esp + 4], ax
-
-    mov     ax, BaseOfLoader        
-    mov     [esp + 2], ax
-
-    mov     ax, OffsetOfLoader      
-    mov     [esp], ax
-
+    sub     esp, 10
+    mov     [esp + 8], word SectorNoOfRootDirectory
+    mov     [esp + 6], word RootDirSectors		
+    mov     [esp + 2], dword BaseOfLoader        
+    mov     [esp], word OffsetOfLoader      
     call    ReadSec
-    add     esp, 8
+    add     esp, 10
 
     ;mov     ci, OffsetOfLoader
     ;sub     esp, 18
@@ -262,29 +255,6 @@ ReadDir:
     pop     ebp
     ret
 
-DispTestMessage:
-    push    ebp
-    mov     ebp, esp
-    push    ax
-
-    sub     esp, 4 
-    mov     ax, [test_message_len] 
-
-    mov     [esp + 2], ax
-    mov     ax, test_message 
-
-    mov     [esp], ax
-
-    call    DispStr
-    add     esp, 4
-
-    call    DispRet
-
-    pop     ax
-    pop     ebp
-    ret
-;end of DispTestMessage
-
 DispDebugMessage:
     push    ebp
     mov     ebp, esp
@@ -293,8 +263,8 @@ DispDebugMessage:
     sub     esp, 8 
     mov     ax, [debug_message_len] 
     mov     [esp + 6], ax
-    mov     [esp + 2], es
-    mov     ax, debug_message 
+    mov     [esp + 2], ds
+    mov     ax, word debug_message 
     mov     [esp], ax
 
     call    DispStr
@@ -382,29 +352,46 @@ start:
     mov esp, BaseOfStack 
     mov ebp, esp
 
-    call Clear_Screen
-    call    DispDebugMessage
+    sub     esp, 2
+    mov     [esp], word 'A'
+    call    DispChar
+    add     esp, 2
 
-    call    ReadDir
-
-    sub     esp, 18
-    mov     [esp + 12], es 
-    mov     [esp + 10], word boot_message        
-    mov     ax, [boot_message_len]
-    mov     [esp + 8], ax
-
-    mov     [esp + 4], es
-    mov     [esp + 2], word test_message
-    mov     ax, [test_message_len]
-    mov     [esp], ax
-    call    CmpStr
-
-    ;call    DispDebugMessage
-    add     esp, 16
-    ;call    DispDebugMessage
-
-    call    DispW
     call    DispRet
+
+    sub     esp, 8 
+    mov     ax, [debug_message_len] 
+    mov     [esp + 6], ax
+    mov     [esp + 2], ds
+    mov     ax, debug_message 
+    mov     [esp], ax
+
+    call    DispStr
+    add     esp, 8
+    ;call    DispRet
+
+    ;call    Clear_Screen
+    ;call    DispDebugMessage
+
+    ;call    ReadDir
+    ;sub     esp, 18
+    ;mov     [esp + 12], es 
+    ;mov     [esp + 10], word boot_message        
+    ;mov     ax, [boot_message_len]
+    ;mov     [esp + 8], ax
+
+    ;mov     [esp + 4], es
+    ;mov     [esp + 2], word test_message
+    ;mov     ax, [test_message_len]
+    ;mov     [esp], ax
+    ;call    CmpStr
+
+    ;call    DispDebugMessage
+    ;add     esp, 16
+    ;call    DispDebugMessage
+
+    ;call    DispW
+    ;call    DispRet
 
     ;push    esp
     ;call    DispW
