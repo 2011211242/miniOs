@@ -29,7 +29,7 @@ DispChar:
 
     mov	ax, [ebp + 6]
     cmp al, 0ah 
-    jz DispChar_handle_Ret
+    jz .DispChar_handle_Ret
 
     mov	dx, 0B800h
     mov	gs, dx
@@ -37,18 +37,18 @@ DispChar:
     mov bx, [cursor]
 
     cmp bx, 160 * 25
-    jnae DispChar_handle_cursor
+    jnae .DispChar_handle_cursor
     mov bx, 0
-DispChar_handle_cursor:
+.DispChar_handle_cursor:
     mov	[gs:bx], ax	        ;屏幕第 0 行, 第 39 列。
     add bx, 02h
     mov [cursor], bx
-    jmp DispChar_handle_restore
+    jmp .DispChar_handle_restore
 
-DispChar_handle_Ret:
+.DispChar_handle_Ret:
     call  DispRet
 
-DispChar_handle_restore:
+.DispChar_handle_restore:
     pop cx
     pop dx
     pop bx
@@ -69,10 +69,10 @@ DispRet:       ;换行
     div bl
     inc al
     cmp al, 25
-    jnae DispRet_handle_cursor
+    jnae .DispRet_handle_cursor
     mov al, 0
 
-DispRet_handle_cursor:
+.DispRet_handle_cursor:
     mul bl
     mov [cursor], ax
 
@@ -82,40 +82,41 @@ DispRet_handle_cursor:
     ret
 
 ;打印dw的十六进制数字串
-DispDw:
+DispW:
     push    ebp
     mov     ebp, esp
-    push ax
-    push cx
+    push    ax
+    push    cx
 
-    mov cl, 010h
-DispDw_loop:
-    mov ax, [ebp + 6]
-    cmp cl, 0
-    jz DispDw_handle_end
-    sub cl, 4
-    shr ax, cl
+    mov     cl, 010h
+.DispDw_loop:
+    mov     ax, [ebp + 6]
+    cmp     cl, 0
+    jz      .DispDw_handle_end
+    sub     cl, 4
+    shr     ax, cl
+    and     ax, 00fh
 
-    cmp al, 09h
-    ja DispDw_loop_Digit_handle_greaer_9
+    cmp     al, 09h
+    ja      .DispDw_loop_Digit_handle_greaer_9
 
-    add al, '0'
-    jmp DispDw_loop_Digit_handle_print
+    add     al, '0'
+    jmp     .DispDw_loop_Digit_handle_print
 
-DispDw_loop_Digit_handle_greaer_9:
-    sub al, 0ah
-    add al, 'a'
+.DispDw_loop_Digit_handle_greaer_9:
+    sub     al, 0ah
+    add     al, 'a'
 
-DispDw_loop_Digit_handle_print:
-    push ax
-    call DispChar
-    pop ax
-    jmp DispDw_loop
+.DispDw_loop_Digit_handle_print:
+    push    ax
+    call    DispChar
+    pop     ax
+    jmp     .DispDw_loop
 
-DispDw_handle_end:
-    pop cx
-    pop ax
-    pop ebp
+.DispDw_handle_end:
+    pop     cx
+    pop     ax
+    pop     ebp
     ret
 ;end of 打印dw的十六进制数字串
 
@@ -155,13 +156,13 @@ DispStr:
     mov     cx, [ebp + 8] 
     mov     si, [ebp + 6]
 
-DispStr_loop:
+.DispStr_loop:
     mov     bx, [si]
     push    bx
     call    DispChar
     pop     bx
     inc     si
-    loop    DispStr_loop
+    loop    .DispStr_loop
 
     pop     bx
     pop     cx
@@ -177,6 +178,11 @@ ResetDisk:
     int     13h
     ret
 
+;------------------------------------
+;dw      起始扇区号
+;dw      要读的扇区数, <= 256
+;es:bx   目的缓冲区地址
+;------------------------------------
 ReadSec:
     push    ebp
     mov     ebp, esp
@@ -185,32 +191,179 @@ ReadSec:
     push    dx
     push    es
     push    bx
+    
+    mov     ax, [ebp + 12]          ;起始扇区
+    mov     bl, [BPB_SecPerTrk]
+    div     bl
 
-    mov     ax, [ebp + 6]
+    inc     ah
+    mov     cl, ah
+    mov     dh, al
+
+    shr     al, 1
+    mov     ch, al
+    and     dh, 1
+    mov     dl, [BS_DrvNum]
+
+    mov     ax, [ebp + 8]
     mov     es, ax
-    mov     bx, [ebp + 8]
-    mov     dx, [ebp + 10]
-    mov     cx, [ebp + 12]
-    mov     ax, [ebp + 14]
+    mov     ax, [ebp + 10]
+    xor     ah, ah
+    mov     bx, [ebp + 6]
+.GoOnReading:
+    mov     ah, 2
     int     13h
 
+    jc      .GoOnReading
     pop     bx
     pop     es
     pop     dx
     pop     cx
     pop     ax
     pop     ebp
-
     ret
-      
 
-    
+;加载根目录区
+ReadDir:
+    push    ebp
+    mov     ebp, esp
+    push    ax
+
+    sub     esp, 8
+    mov     ax, SectorNoOfRootDirectory
+    mov     [esp + 6], ax
+
+    mov     ax, RootDirSectors		
+    mov     [esp + 4], ax
+
+    mov     ax, BaseOfLoader        
+    mov     [esp + 2], ax
+
+    mov     ax, OffsetOfLoader      
+    mov     [esp], ax
+
+    call    ReadSec
+
+    add     esp, 8
+    pop     ax
+    pop     ebp
+    ret
+
+DispTestMessage:
+    push    ebp
+    mov     ebp, esp
+    push    ax
+
+    sub     esp, 4 
+    mov     ax, [test_message_len] 
+
+    mov     [esp + 2], ax
+    mov     ax, test_message 
+
+    mov     [esp], ax
+
+    call    DispStr
+    add     esp, 4
+
+    call    DispRet
+
+    pop     ax
+    pop     ebp
+    ret
+;end of DispTestMessage
+
+DispDebugMessage:
+    push    ebp
+    mov     ebp, esp
+    push    ax
+
+    sub     esp, 4 
+    mov     ax, [debug_message_len] 
+    mov     [esp + 2], ax
+
+    mov     ax, debug_message 
+    mov     [esp], ax
+
+    call    DispStr
+    add     esp, 4
+    call    DispRet
+
+    pop     ax
+    pop     ebp
+    ret
+;end of DispDebugMessage
+
+
+
+
+; 比较字符串是否相等
+; ret       +22 +16    0 equal 1 not equal
+; es        +18 +12
+; di        +16 +10
+; len1 2W   +14 +8
+; ds        +10 +4
+; si        +8  +2
+; len2      +6  0
+CmpStr:
+    push    ebp
+    mov     ebp, esp
+    push    ax
+    push    bx
+
+    push    es
+    push    di
+    push    ds
+    push    si
+
+    mov     es, [ebp + 18]
+    mov     di, [ebp + 16]
+    mov     ds, [ebp + 10]
+    mov     si, [ebp + 8]
+
+    mov     ax, [ebp + 6] 
+    mov     bx, [ebp + 14]
+
+    cmp     ax, bx 
+    jnz     .return_1_cmp_str
+    mov     cx, ax
+.loop_cmp_str:
+    lodsb
+    cmp     al, byte [es:di]
+    jnz     .return_1_cmp_str
+
+    inc     di
+    loop    .loop_cmp_str
+
+    mov     [ebp + 22], word 00h
+    jmp     .end_cmp_str
+.return_1_cmp_str:
+    mov     [ebp + 22], word 01h
+.end_cmp_str:
+    pop     si
+    pop     ds
+    pop     di
+    pop     es
+    pop     bx
+    pop     ax
+    pop     ebp
+    ret
+;end of CmpStr
+
 
 cursor              dw 160 * 0
 boot_message        dw "boot ..."
 boot_message_len    dw $ - boot_message
 
-start:  
+test_message        dw "boot ..."
+test_message_len    dw $ - test_message
+
+debug_message        dw "debug ..."
+debug_message_len    dw $ - debug_message
+
+load_file_name       dw "loader.com"
+load_file_name_len   dw $ - load_file_name       
+
+start:
     mov ax, cs
     mov ds, ax
     mov es, ax
@@ -219,16 +372,37 @@ start:
     mov ebp, esp
 
     call Clear_Screen
+    call    ReadDir
 
-    sub     esp, 4 
-    mov     ax, [boot_message_len] 
+    sub     esp, 18
+    mov     [esp + 12], es 
+    mov     [esp + 10], word boot_message        
+    mov     ax, [boot_message_len]
+    mov     [esp + 8], ax
 
-    mov     [esp + 2], ax
-    mov     ax, boot_message 
+    mov     [esp + 4], es
+    mov     [esp + 2], word test_message
+    mov     ax, [test_message_len]
     mov     [esp], ax
+    call    CmpStr
 
-    call    DispStr
-    add     esp, 4
+    call    DispDebugMessage
+    add     esp, 16
+    call    DispDebugMessage
+
+    call    DispW
+    call    DispRet
+
+   ;push    esp
+    ;call    DispW
+    ;call    DispRet
+
+    ;pop     ax
+    ;push    ds
+    ;push    esp
+    ;call    DispW
+    ;call    DispRet
+
 end:
     mov ax, 4c00h
     int 21h
@@ -236,5 +410,4 @@ end:
 
 ;times 	2510-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
 ;dw 	0xaa55				; 结束标志
-
 
