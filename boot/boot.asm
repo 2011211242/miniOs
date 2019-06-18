@@ -16,7 +16,6 @@ nop
 
 
 ;stack resb 32
-
 ;打印一个字符
 DispChar:
     push    ebp
@@ -82,20 +81,20 @@ DispRet:       ;换行
     ret
 
 ;打印dw的十六进制数字串
-DispW:
+DispDW:
     push    ebp
     mov     ebp, esp
-    push    ax
+    push    eax
     push    cx
 
-    mov     cl, 010h
+    mov     cl, 020h
 .DispDw_loop:
-    mov     ax, [ebp + 6]
+    mov     eax, [ebp + 6]
     cmp     cl, 0
     jz      .DispDw_handle_end
     sub     cl, 4
-    shr     ax, cl
-    and     ax, 00fh
+    shr     eax, cl
+    and     eax, 00fh
 
     cmp     al, 09h
     ja      .DispDw_loop_Digit_handle_greaer_9
@@ -115,7 +114,7 @@ DispW:
 
 .DispDw_handle_end:
     pop     cx
-    pop     ax
+    pop     eax
     pop     ebp
     ret
 ;end of 打印dw的十六进制数字串
@@ -158,8 +157,9 @@ DispStr:
     mov     es, [ebp + 8]
     mov     si, [ebp + 6]
 
+    xor     bh, bh
 .DispStr_loop:
-    mov     bx, [es:si]
+    mov     bl, [es:si]
     push    bx
     call    DispChar
     pop     bx
@@ -291,28 +291,16 @@ DispDebugMessage:
     add     esp, 8
     call    DispRet
     
-    sub     esp, 2
-    mov     ax, [boot_message_len]
-    mov     [esp], ax
-    call    DispW
-    add     esp, 2
-
-
-
     pop     ax
     pop     ebp
     ret
 ;end of DispDebugMessage
 
-
-
-
 ; 比较字符串是否相等
-; ret       +22 +16    0 equal 1 not equal
-; es        +18 +12
-; di        +16 +10
-; len1 2W   +14 +8
-; ds        +10 +4
+; ret       +18 +12   0 equal 1 not equal
+; es        +14 +8
+; di        +12 +6
+; len1 2W   +10 +4
 ; si        +8  +2
 ; len2      +6  0
 CmpStr:
@@ -323,16 +311,14 @@ CmpStr:
 
     push    es
     push    di
-    push    ds
     push    si
 
-    mov     es, [ebp + 18]
-    mov     di, [ebp + 16]
-    mov     ds, [ebp + 10]
+    mov     es, [ebp + 14]
+    mov     di, [ebp + 12]
     mov     si, [ebp + 8]
 
     mov     ax, [ebp + 6] 
-    mov     bx, [ebp + 14]
+    mov     bx, [ebp + 10]
 
     cmp     ax, bx 
     jnz     .return_1_cmp_str
@@ -345,13 +331,12 @@ CmpStr:
     inc     di
     loop    .loop_cmp_str
 
-    mov     [ebp + 22], word 00h
+    mov     [ebp + 18], word 00h
     jmp     .end_cmp_str
 .return_1_cmp_str:
-    mov     [ebp + 22], word 01h
+    mov     [ebp + 18], word 01h
 .end_cmp_str:
     pop     si
-    pop     ds
     pop     di
     pop     es
     pop     bx
@@ -359,7 +344,6 @@ CmpStr:
     pop     ebp
     ret
 ;end of CmpStr
-
 
 cursor              dw 160 * 0
 boot_message        dw "boot ..."
@@ -385,37 +369,56 @@ start:
     call    Clear_Screen
     call    DispDebugMessage
 
-    ;call    ReadDir
-    ;sub     esp, 18
-    ;mov     [esp + 12], es 
-    ;mov     [esp + 10], word boot_message        
-    ;mov     ax, [boot_message_len]
-    ;mov     [esp + 8], ax
+    ;mov     cx, [ebp + 12] 
+    ;mov     es, [ebp + 8]
+    ;mov     si, [ebp + 6]
 
-    ;mov     [esp + 4], es
+    ;call    ReadDir
+    ;sub     esp, 8
+    ;mov     [esp + 6], word 512
+    ;mov     [esp + 2], dword BaseOfLoader
+    ;mov     [esp], word OffsetOfLoader      
+    ;call    DispStr
+    ;add     esp, 8
+
+    push    dword 0ffffeeeeh
+    call    DispDW
+    pop     eax
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;
+    ;sub     esp, 14
+    ;mov     [esp + 8], es 
+    ;mov     [esp + 6], word boot_message        
+    ;mov     ax, [boot_message_len]
+    ;mov     [esp + 4], ax
+
     ;mov     [esp + 2], word test_message
     ;mov     ax, [test_message_len]
     ;mov     [esp], ax
     ;call    CmpStr
+    ;add     esp, 12
+
+    ;call    DispDW
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     ;call    DispDebugMessage
     ;add     esp, 16
     ;call    DispDebugMessage
 
-    ;call    DispW
+    ;call    DispDW
     ;call    DispRet
 
-   ;push    esp
-    ;call    DispW
+    ;push    esp
+    ;call    DispDW
     ;call    DispRet
 
     ;pop     ax
     ;push    ds
     ;push    esp
-    ;call    DispW
+    ;call    DispDW
     ;call    DispRet
-
 end:
+    jmp $
     mov ax, 4c00h
     int 21h
     jmp $
