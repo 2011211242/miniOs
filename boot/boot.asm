@@ -189,13 +189,20 @@ ResetDisk:
 ReadSec:
     push    ebp
     mov     ebp, esp
-    push    ax
-    push    cx
-    push    dx
+    push    eax
+    push    ecx
+    push    edx
     push    es
-    push    bx
+    push    ebx
     
-    mov     ax, [ebp + 12]          ;起始扇区
+    mov     ax, SectorNoOfRootDirectory        ;[ebp + 14]          ;起始扇区
+    ;;;
+    and     eax, 0ffffh
+    push    eax
+    call    DispDW
+    pop     eax
+    call    DispRet
+    ;;;
     mov     bl, [BPB_SecPerTrk]
     div     bl
 
@@ -208,21 +215,47 @@ ReadSec:
     and     dh, 1
     mov     dl, [BS_DrvNum]
 
-    mov     ax, [ebp + 8]
-    mov     es, ax
-    mov     ax, [ebp + 10]
-    xor     ah, ah
-    mov     bx, [ebp + 6]
+    ;mov     eax, [ebp + 8]
+    mov     eax, BaseOfLoader 
+    mov     es, eax
+
+    ;mov     es, BaseOfLoader ;eax
+    mov     ax, [ebp + 12]
+
+    ;;;;;;;;;;;;;;;;
+    push    es
+    call    DispDW
+    pop     es
+
+    call    DispRet
+
+    and     eax, 0ffffh
+    push    eax
+    call    DispDW
+    pop     eax
+    mov     ax, 01h
+    ;;;;;;;;;;;;;;;
+
+    mov     bx, OffsetOfLoader;[ebp + 6]
+    ;;;;;;;;;;;;;;;;;;
+    ;call    DispRet
+    ;and     ebx, 0ffffh
+    ;push    ebx
+    ;call    DispDW
+    ;pop     ebx
+    ;call    DispRet
+    ;;;;;;;;;;;;;;;;
 .GoOnReading:
     mov     ah, 2
+    mov     al, 01h
     int     13h
 
     jc      .GoOnReading
-    pop     bx
+    pop     ebx
     pop     es
-    pop     dx
-    pop     cx
-    pop     ax
+    pop     edx
+    pop     ecx
+    pop     eax
     pop     ebp
     ret
 
@@ -230,25 +263,25 @@ ReadSec:
 ReadDir:
     push    ebp
     mov     ebp, esp
-    push    ax
+    push    eax
 
-    sub     esp, 8
+    sub     esp, 10
     mov     ax, SectorNoOfRootDirectory
-    mov     [esp + 6], ax
+    mov     [esp + 8], ax
 
     mov     ax, RootDirSectors		
-    mov     [esp + 4], ax
+    mov     [esp + 6], ax
 
-    mov     ax, BaseOfLoader        
-    mov     [esp + 2], ax
+    mov     eax, BaseOfLoader        
+    mov     [esp + 2], eax
 
     mov     ax, OffsetOfLoader      
     mov     [esp], ax
 
     call    ReadSec
 
-    add     esp, 8
-    pop     ax
+    add     esp, 10
+    pop     eax
     pop     ebp
     ret
 
@@ -373,17 +406,24 @@ start:
     ;mov     es, [ebp + 8]
     ;mov     si, [ebp + 6]
 
-    ;call    ReadDir
-    ;sub     esp, 8
-    ;mov     [esp + 6], word 512
-    ;mov     [esp + 2], dword BaseOfLoader
-    ;mov     [esp], word OffsetOfLoader      
-    ;call    DispStr
-    ;add     esp, 8
+    call    ReadDir
 
-    push    dword 0ffffeeeeh
-    call    DispDW
-    pop     eax
+    call    DispRet
+    sub     esp, 8
+    mov     [esp + 6], word 512
+    mov     [esp + 2], dword BaseOfLoader
+    mov     [esp], word OffsetOfLoader      
+    call    DispStr
+    add     esp, 8
+
+    ;push    dword BaseOfLoader
+    ;call    DispDW
+    ;pop     eax
+
+    ;call    DispRet
+    ;push    dword OffsetOfLoader
+    ;call    DispDW
+    ;pop     eax
 
     ;;;;;;;;;;;;;;;;;;;;;;;;
     ;sub     esp, 14
