@@ -1,13 +1,13 @@
 %define _BOOT_DEBUG_
 
 %ifdef _BOOT_DEBUG_
-    LOADBASE equ 0100h
+    BOOTBASE equ 0100h
 %else
-    LOADBASE equ 07c00h
+    BOOTBASE equ 07c00h
 %endif
 
-BaseOfStack equ LOADBASE 
-org    LOADBASE 
+BaseOfStack equ BOOTBASE 
+org    BOOTBASE 
 
 jmp start
 nop
@@ -80,41 +80,41 @@ DispRet:       ;换行
     pop ebp
     ret
 
-;打印dw的十六进制数字串
-DispDW:
+;打印Word的十六进制数字串
+DispW:
     push    ebp
     mov     ebp, esp
-    push    eax
+    push    ax
     push    cx
 
-    mov     cl, 020h
-.DispDw_loop:
-    mov     eax, [ebp + 6]
+    mov     cl, 010h
+.DispW_loop:
+    mov     ax, [ebp + 6]
     cmp     cl, 0
-    jz      .DispDw_handle_end
+    jz      .DispW_handle_end
     sub     cl, 4
-    shr     eax, cl
-    and     eax, 00fh
+    shr     ax, cl
+    and     ax, 00fh
 
     cmp     al, 09h
-    ja      .DispDw_loop_Digit_handle_greaer_9
+    ja      .DispW_loop_Digit_handle_greaer_9
 
     add     al, '0'
-    jmp     .DispDw_loop_Digit_handle_print
+    jmp     .DispW_loop_Digit_handle_print
 
-.DispDw_loop_Digit_handle_greaer_9:
+.DispW_loop_Digit_handle_greaer_9:
     sub     al, 0ah
     add     al, 'a'
 
-.DispDw_loop_Digit_handle_print:
+.DispW_loop_Digit_handle_print:
     push    ax
     call    DispChar
     pop     ax
-    jmp     .DispDw_loop
+    jmp     .DispW_loop
 
-.DispDw_handle_end:
+.DispW_handle_end:
     pop     cx
-    pop     eax
+    pop     ax
     pop     ebp
     ret
 ;end of 打印dw的十六进制数字串
@@ -153,7 +153,7 @@ DispStr:
     push    bx
     push    es
 
-    mov     cx, [ebp + 12] 
+    mov     cx, [ebp + 10] 
     mov     es, [ebp + 8]
     mov     si, [ebp + 6]
 
@@ -189,20 +189,13 @@ ResetDisk:
 ReadSec:
     push    ebp
     mov     ebp, esp
-    push    eax
-    push    ecx
-    push    edx
+    push    ax
+    push    cx
+    push    dx
     push    es
-    push    ebx
+    push    bx
     
-    mov     ax, SectorNoOfRootDirectory        ;[ebp + 14]          ;起始扇区
-    ;;;
-    and     eax, 0ffffh
-    push    eax
-    call    DispDW
-    pop     eax
-    call    DispRet
-    ;;;
+    mov     ax, word [ebp + 12]          ;起始扇区
     mov     bl, [BPB_SecPerTrk]
     div     bl
 
@@ -215,47 +208,20 @@ ReadSec:
     and     dh, 1
     mov     dl, [BS_DrvNum]
 
-    ;mov     eax, [ebp + 8]
-    mov     eax, BaseOfLoader 
-    mov     es, eax
+    mov     es, [ebp + 8]
 
-    ;mov     es, BaseOfLoader ;eax
-    mov     ax, [ebp + 12]
-
-    ;;;;;;;;;;;;;;;;
-    push    es
-    call    DispDW
-    pop     es
-
-    call    DispRet
-
-    and     eax, 0ffffh
-    push    eax
-    call    DispDW
-    pop     eax
-    mov     ax, 01h
-    ;;;;;;;;;;;;;;;
-
-    mov     bx, OffsetOfLoader;[ebp + 6]
-    ;;;;;;;;;;;;;;;;;;
-    ;call    DispRet
-    ;and     ebx, 0ffffh
-    ;push    ebx
-    ;call    DispDW
-    ;pop     ebx
-    ;call    DispRet
-    ;;;;;;;;;;;;;;;;
+    mov     ax, [ebp + 10]
+    mov     bx, [ebp + 6]
 .GoOnReading:
     mov     ah, 2
-    mov     al, 01h
     int     13h
 
     jc      .GoOnReading
-    pop     ebx
+    pop     bx
     pop     es
-    pop     edx
-    pop     ecx
-    pop     eax
+    pop     dx
+    pop     cx
+    pop     ax
     pop     ebp
     ret
 
@@ -263,65 +229,54 @@ ReadSec:
 ReadDir:
     push    ebp
     mov     ebp, esp
-    push    eax
 
-    sub     esp, 10
-    mov     ax, SectorNoOfRootDirectory
-    mov     [esp + 8], ax
-
-    mov     ax, RootDirSectors		
-    mov     [esp + 6], ax
-
-    mov     eax, BaseOfLoader        
-    mov     [esp + 2], eax
-
-    mov     ax, OffsetOfLoader      
-    mov     [esp], ax
-
+    sub     esp, 8
+    mov     [esp + 6], word SectorNoOfRootDirectory
+    mov     [esp + 4], word RootDirSectors		
+    mov     [esp + 2], word BaseOfLoader        
+    mov     [esp],     word OffsetOfLoader      
     call    ReadSec
+    add     esp, 8
 
-    add     esp, 10
-    pop     eax
     pop     ebp
     ret
 
-DispTestMessage:
+DispBootMessage:
     push    ebp
     mov     ebp, esp
     push    ax
 
-    sub     esp, 4 
-    mov     ax, [test_message_len] 
-
-    mov     [esp + 2], ax
-    mov     ax, test_message 
-
+    sub     esp, 6 
+    mov     ax, [boot_message_len] 
+    mov     [esp + 4], ax
+    mov     [esp + 2], ds
+    mov     ax, boot_message 
     mov     [esp], ax
 
     call    DispStr
-    add     esp, 4
-
+    add     esp, 6
     call    DispRet
-
+    
     pop     ax
     pop     ebp
     ret
-;end of DispTestMessage
+;end of DispDebugMessage
+
 
 DispDebugMessage:
     push    ebp
     mov     ebp, esp
     push    ax
 
-    sub     esp, 8 
+    sub     esp, 6 
     mov     ax, [debug_message_len] 
-    mov     [esp + 6], ax
+    mov     [esp + 4], ax
     mov     [esp + 2], ds
     mov     ax, debug_message 
     mov     [esp], ax
 
     call    DispStr
-    add     esp, 8
+    add     esp, 6
     call    DispRet
     
     pop     ax
@@ -330,7 +285,7 @@ DispDebugMessage:
 ;end of DispDebugMessage
 
 ; 比较字符串是否相等
-; ret       +18 +12   0 equal 1 not equal
+; ret       +16 +10   0 equal 1 not equal
 ; es        +14 +8
 ; di        +12 +6
 ; len1 2W   +10 +4
@@ -378,6 +333,34 @@ CmpStr:
     ret
 ;end of CmpStr
 
+FindLoader:
+    mov     cx, [BPB_RootEntCnt]
+    mov     ax, word BaseOfLoader
+    mov     es, ax
+    mov     si, word OffsetOfLoader
+
+    push    ax
+    call    DispW
+    call    DispRet
+    
+    push    esp
+    call    DispW
+    call    DispRet
+    pop     esp
+
+    push    ds
+    push    esp
+    call    DispW
+    call    DispRet
+    pop     esp
+    pop     cs
+
+    ret
+
+;loop
+    ;mov cx,  
+;end of FindLoader
+
 cursor              dw 160 * 0
 boot_message        dw "boot ..."
 boot_message_len    dw $ - boot_message
@@ -388,8 +371,8 @@ test_message_len    dw $ - test_message
 debug_message        dw "debug ..."
 debug_message_len    dw $ - debug_message
 
-load_file_name       dw "loader.com"
-load_file_name_len   dw $ - load_file_name       
+LoaderFileName      db  "LOADER  BIN", 0 ;LOADER.COM文件名
+SectorIndex         dw  0
 
 start:
     mov ax, cs
@@ -400,63 +383,18 @@ start:
     mov ebp, esp
 
     call    Clear_Screen
-    call    DispDebugMessage
-
-    ;mov     cx, [ebp + 12] 
-    ;mov     es, [ebp + 8]
-    ;mov     si, [ebp + 6]
-
+    call    DispBootMessage
     call    ReadDir
 
-    call    DispRet
-    sub     esp, 8
-    mov     [esp + 6], word 512
-    mov     [esp + 2], dword BaseOfLoader
+    sub     esp, 6
+    mov     [esp + 4], word 512
+    mov     [esp + 2], word BaseOfLoader
     mov     [esp], word OffsetOfLoader      
     call    DispStr
-    add     esp, 8
+    add     esp, 6
+    call    DispRet
+    call    FindLoader
 
-    ;push    dword BaseOfLoader
-    ;call    DispDW
-    ;pop     eax
-
-    ;call    DispRet
-    ;push    dword OffsetOfLoader
-    ;call    DispDW
-    ;pop     eax
-
-    ;;;;;;;;;;;;;;;;;;;;;;;;
-    ;sub     esp, 14
-    ;mov     [esp + 8], es 
-    ;mov     [esp + 6], word boot_message        
-    ;mov     ax, [boot_message_len]
-    ;mov     [esp + 4], ax
-
-    ;mov     [esp + 2], word test_message
-    ;mov     ax, [test_message_len]
-    ;mov     [esp], ax
-    ;call    CmpStr
-    ;add     esp, 12
-
-    ;call    DispDW
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    ;call    DispDebugMessage
-    ;add     esp, 16
-    ;call    DispDebugMessage
-
-    ;call    DispDW
-    ;call    DispRet
-
-    ;push    esp
-    ;call    DispDW
-    ;call    DispRet
-
-    ;pop     ax
-    ;push    ds
-    ;push    esp
-    ;call    DispDW
-    ;call    DispRet
 end:
     jmp $
     mov ax, 4c00h

@@ -1,7 +1,10 @@
 SRC:=boot.asm \
 	loader.asm
 
-BIN:=$(subst .asm,.com,$(SRC))
+#BIN:=$(subst .asm,.com,$(SRC))
+
+BIN:=boot.com \
+	loader.bin
 
 ASMBFLAGS   = -I include/
 
