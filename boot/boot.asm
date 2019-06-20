@@ -329,32 +329,51 @@ CmpStr:
     pop     es
     pop     bx
     pop     ax
+
     pop     ebp
     ret
 ;end of CmpStr
 
 FindLoader:
+    push    ebp
+    mov     ebp, esp
+
+    push    cx
+    push    ax
+    push    es
+    push    si
+
     mov     cx, [BPB_RootEntCnt]
     mov     ax, word BaseOfLoader
     mov     es, ax
     mov     si, word OffsetOfLoader
 
-    push    ax
-    call    DispW
-    call    DispRet
-    
-    push    esp
-    call    DispW
-    call    DispRet
-    pop     esp
+    mov     cx, 10 ;test
 
-    push    ds
-    push    esp
-    call    DispW
+    mov     [esp + 4], word 0bh
+    mov     [esp + 2], es
+loop_next_ent:
+    ;add      
+    mov     [esp], si
+    call    DispStr
     call    DispRet
-    pop     esp
-    pop     cs
+    add     si, 20h
 
+; ret       +16 +10   0 equal 1 not equal
+; es        +14 +8
+; di        +12 +6
+; len1 2W   +10 +4
+; si        +8  +2
+; len2      +6  0
+
+    loop    loop_next_ent
+
+    pop     si
+    pop     es
+    pop     ax
+    pop     cx
+
+    pop     ebp
     ret
 
 ;loop
@@ -385,16 +404,7 @@ start:
     call    Clear_Screen
     call    DispBootMessage
     call    ReadDir
-
-    sub     esp, 6
-    mov     [esp + 4], word 512
-    mov     [esp + 2], word BaseOfLoader
-    mov     [esp], word OffsetOfLoader      
-    call    DispStr
-    add     esp, 6
-    call    DispRet
     call    FindLoader
-
 end:
     jmp $
     mov ax, 4c00h
@@ -403,4 +413,3 @@ end:
 
 ;times 	2510-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
 ;dw 	0xaa55				; 结束标志
-
