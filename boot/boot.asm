@@ -294,9 +294,10 @@ DispDebugMessage:
 CmpStr:
     push    ebp
     mov     ebp, esp
+
     push    ax
     push    bx
-
+    push    cx
     push    es
     push    di
     push    si
@@ -319,14 +320,15 @@ CmpStr:
     inc     di
     loop    .loop_cmp_str
 
-    mov     [ebp + 18], word 00h
+    mov     [ebp + 16], word 00h
     jmp     .end_cmp_str
 .return_1_cmp_str:
-    mov     [ebp + 18], word 01h
+    mov     [ebp + 16], word 01h
 .end_cmp_str:
     pop     si
     pop     di
     pop     es
+    pop     cx
     pop     bx
     pop     ax
 
@@ -342,32 +344,32 @@ FindLoader:
     push    ax
     push    es
     push    si
+    push    di
 
     mov     cx, [BPB_RootEntCnt]
-    mov     ax, word BaseOfLoader
-    mov     es, ax
-    mov     si, word OffsetOfLoader
 
-    mov     cx, 10 ;test
-
+    sub     esp, 12
+    mov     [esp + 8], word BaseOfLoader
+    mov     [esp + 6], word OffsetOfLoader
     mov     [esp + 4], word 0bh
-    mov     [esp + 2], es
-loop_next_ent:
-    ;add      
-    mov     [esp], si
-    call    DispStr
-    call    DispRet
-    add     si, 20h
-
-; ret       +16 +10   0 equal 1 not equal
-; es        +14 +8
-; di        +12 +6
-; len1 2W   +10 +4
-; si        +8  +2
-; len2      +6  0
-
-    loop    loop_next_ent
-
+    mov     [esp + 2], word LoaderFileName
+    mov     [esp], word 0bh
+.loop_next_ent:
+    call    CmpStr
+    cmp     [esp + 10], word 000h
+    jz      .entry_founded
+    
+    add     [esp + 8], word 002h
+    loop    .loop_next_ent
+    add     esp, 12
+    jmp     .findloader_end
+.entry_founded:                 ;目录条目已经找到
+    push    word [esp + 10]
+    call    DispW
+    pop     ax
+    add     esp, 12
+.findloader_end:
+    pop     di
     pop     si
     pop     es
     pop     ax
