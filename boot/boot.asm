@@ -361,14 +361,15 @@ FindLoader:
     
     add     [esp + 8], word 002h
     loop    .loop_next_ent
-    add     esp, 12
     jmp     .findloader_end
 .entry_founded:                 ;目录条目已经找到
     push    word [esp + 10]
     call    DispW
+    call    DispRet
+    call    DispDebugMessage
     pop     ax
-    add     esp, 12
 .findloader_end:
+    add     esp, 12
     pop     di
     pop     si
     pop     es
@@ -386,10 +387,7 @@ cursor              dw 160 * 0
 boot_message        dw "boot ..."
 boot_message_len    dw $ - boot_message
 
-test_message        dw "boot ..."
-test_message_len    dw $ - test_message
-
-debug_message        dw "debug ..."
+debug_message        dw "loader founded..."
 debug_message_len    dw $ - debug_message
 
 LoaderFileName      db  "LOADER  BIN", 0 ;LOADER.COM文件名
