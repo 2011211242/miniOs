@@ -16,7 +16,8 @@ everything : $(BIN)
 	sudo umount /mnt/floppy/
 
 $(BIN) : $(SRC)
-	nasm $(ASMBFLAGS) $< -o $@
+	nasm $(ASMBFLAGS) boot.asm -o boot.com
+	nasm $(ASMBFLAGS) loader.asm -o loader.bin
 
 clean:
 	rm -rf *.com *.bin

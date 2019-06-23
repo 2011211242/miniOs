@@ -40,9 +40,13 @@ SectorNoOfRootDirectory	equ	19	; Root Directory 的第一个扇区号	= BPB_Rsvd
 SectorNoOfFAT1		equ	1	; FAT1 的第一个扇区号	= BPB_RsvdSecCnt
 DeltaSectorNo		equ	17	; DeltaSectorNo = BPB_RsvdSecCnt + (BPB_NumFATs * FATSz) - 2
 					; 文件的开始Sector号 = DirEntry中的开始Sector号 + 根目录占用Sector数目 + DeltaSectorNo
+SectorNoOfData      equ 31  ; 数据区开始的扇区号
 
 ; ------------------------------------------------------------------------
 ; 关于loader的常量定义
 ; ------------------------------------------------------------------------
 BaseOfLoader        equ 09000h
 OffsetOfLoader      equ 0100h 
+
+BaseOfFAT           equ 08e00h
+OffsetOfFAT         equ 00h
