@@ -186,11 +186,15 @@ nop
 ReadSec:
     push    ebp
     mov     ebp, esp
-    push    ax
+
     push    cx
     push    dx
-    push    es
-    push    bx
+
+    ;push    ax
+    ;push    cx
+    ;push    dx
+    ;push    es
+    ;push    bx
     
     mov     ax, word [ebp + 12]          ;起始扇区
     mov     bl, [BPB_SecPerTrk]
@@ -214,18 +218,21 @@ ReadSec:
     int     13h
 
     jc      .GoOnReading
-    pop     bx
-    pop     es
+
     pop     dx
     pop     cx
-    pop     ax
+
+    ;pop     bx
+    ;pop     es
+    ;pop     ax
+
     pop     ebp
     ret
 
 ;加载根目录区
 ReadDir:
-    push    ebp
-    mov     ebp, esp
+    ;push    ebp
+    ;mov     ebp, esp
 
     sub     esp, 8
     mov     [esp + 6], word SectorNoOfRootDirectory
@@ -235,16 +242,16 @@ ReadDir:
     call    ReadSec
     add     esp, 8
 
-    pop     ebp
+    ;pop     ebp
     ret
 
 GetFATEntry:
     push    ebp
     mov     ebp, esp
-    push    ax
+    ;push    ax
     push    bx
-    push    dx
-    push    es
+    ;push    dx
+    ;push    es
 
     mov     ax, [ebp + 6]
     mov     [IsOdd], byte 0
@@ -271,8 +278,8 @@ GetFATEntry:
     
     mov     ax, word BaseOfFAT
     mov     es, ax
-    mov     bx, dx
-    mov     ax, [es:bx]     ;ax为对应数据的扇区号
+    mov     si, dx
+    mov     ax, [es:si]     ;ax为对应数据的扇区号
 
     cmp     byte [IsOdd], 1
     jnz     .FATEntry_even
@@ -281,10 +288,10 @@ GetFATEntry:
     and     ax, 0FFFh
     mov     [ebp + 8], ax
 
-    pop     es
-    pop     dx
+    ;pop     es
+    ;pop     dx
     pop     bx
-    pop     ax
+    ;pop     ax
     pop     ebp
     ret
 
@@ -321,19 +328,18 @@ CmpStr:
     push    ebp
     mov     ebp, esp
 
-    push    ax
-    push    bx
-    push    cx
-    push    es
-    push    di
-    push    si
+    ;push    ax
+    ;push    bx
+    ;push    cx
+    ;push    es
+    ;push    di
+    ;push    si
 
     mov     es, [ebp + 14]
     mov     di, [ebp + 12]
-    mov     si, [ebp + 8]
-
-    mov     ax, [ebp + 6] 
     mov     bx, [ebp + 10]
+    mov     si, [ebp + 8]
+    mov     ax, [ebp + 6] 
 
     cmp     ax, bx 
     jnz     .return_1_cmp_str
@@ -351,25 +357,25 @@ CmpStr:
 .return_1_cmp_str:
     mov     [ebp + 16], word 01h
 .end_cmp_str:
-    pop     si
-    pop     di
-    pop     es
-    pop     cx
-    pop     bx
-    pop     ax
+    ;pop     si
+    ;pop     di
+    ;pop     es
+    ;pop     cx
+    ;pop     bx
+    ;pop     ax
 
     pop     ebp
     ret
 ;end of CmpStr
 
 FindLoader:
-    push    ebp
-    mov     ebp, esp
+;    push    ebp
+;    mov     ebp, esp
 
-    push    cx
-    push    ax
-    push    es
-    push    di
+;    push    cx
+;    push    ax
+;    push    es
+;    push    di
 
     mov     cx, [BPB_RootEntCnt]
     sub     esp, 12
@@ -380,6 +386,8 @@ FindLoader:
     mov     [esp], word 0bh
 .loop_next_ent:
     call    CmpStr
+
+;;;;;;;;;;;;;;;;;
     cmp     [esp + 10], word 000h
     jz      .entry_founded
     
@@ -394,26 +402,27 @@ FindLoader:
     mov     [Loader_DIR_FstClus], ax    ;获取开始簇号
 .findloader_end:
     add     esp, 12
-    pop     di
-    pop     es
-    pop     ax
-    pop     cx
+;    pop     di
+;    pop     es
+;    pop     ax
+;    pop     cx
 
-    pop     ebp
+;    pop     ebp
     ret
 ;end of FindLoader
 
 LoadLoader:
-    push    ebp
-    mov     ebp, esp
-    push    ax
-    push    bx 
+    ;push    ebp
+    ;mov     ebp, esp
+    ;push    ax
+    ;push    bx 
 
     mov     ax, [Loader_DIR_FstClus]
     mov     bx, word BaseOfLoader
 .loop_LoadLoader:
     push    ax
     add     ax, SectorNoOfData
+    push    bx
     sub     esp, 8
     mov     [esp + 6], ax
     mov     [esp + 4], word 001h
@@ -421,7 +430,7 @@ LoadLoader:
     mov     [esp], word OffsetOfLoader      
     call    ReadSec
     add     esp, 8
-
+    pop     bx
     pop     ax
     sub     esp, 4
     mov     [esp], ax
@@ -433,9 +442,9 @@ LoadLoader:
     cmp     ax, 0fffh
     jnz     .loop_LoadLoader
 
-    pop     bx
-    pop     ax
-    pop     ebp
+    ;pop     bx
+    ;pop     ax
+    ;pop     ebp
     ret
 
 ;end of LoadLoader
@@ -454,7 +463,7 @@ IsOdd                   db 0
 start:
     mov ax, cs
     mov ds, ax
-    mov es, ax
+    ;mov es, ax
     mov ss, ax
     mov esp, BaseOfStack 
     mov ebp, esp
@@ -462,7 +471,7 @@ start:
     call    ReadDir
     call    FindLoader
     call    LoadLoader
-end:
+
     jmp BaseOfLoader:OffsetOfLoader
 
 ;times 	2510-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
