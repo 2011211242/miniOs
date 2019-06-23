@@ -241,6 +241,14 @@ ReadDir:
     pop     ebp
     ret
 
+GetFATEntry:
+    push    ebp
+    mov     ebp, esp
+    
+
+    pop     ebp
+    ret
+
 DispBootMessage:
     push    ebp
     mov     ebp, esp
@@ -343,7 +351,6 @@ FindLoader:
     push    cx
     push    ax
     push    es
-    push    si
     push    di
 
     mov     cx, [BPB_RootEntCnt]
@@ -363,35 +370,32 @@ FindLoader:
     loop    .loop_next_ent
     jmp     .findloader_end
 .entry_founded:                 ;目录条目已经找到
-    push    word [esp + 10]
-    call    DispW
-    call    DispRet
-    call    DispDebugMessage
-    pop     ax
+    mov     es, [esp + 8]
+    mov     di, [esp + 6]
+    add     di, 0x1A            ;偏移量
+    mov     ax, [es:di]
+    mov     [Loader_DIR_FstClus], ax    ;获取开始簇号
 .findloader_end:
     add     esp, 12
     pop     di
-    pop     si
     pop     es
     pop     ax
     pop     cx
 
     pop     ebp
     ret
-
-;loop
-    ;mov cx,  
 ;end of FindLoader
 
-cursor              dw 160 * 0
-boot_message        dw "boot ..."
-boot_message_len    dw $ - boot_message
+cursor                  dw 160 * 0
+boot_message            dw "boot ..."
+boot_message_len        dw $ - boot_message
 
-debug_message        dw "loader founded..."
-debug_message_len    dw $ - debug_message
+debug_message           dw "loader founded..."
+debug_message_len       dw $ - debug_message
 
-LoaderFileName      db  "LOADER  BIN", 0 ;LOADER.COM文件名
-SectorIndex         dw  0
+LoaderFileName          db  "LOADER  BIN", 0 ;LOADER.COM文件名
+Loader_DIR_FstClus      dw  0
+
 
 start:
     mov ax, cs
@@ -405,6 +409,11 @@ start:
     call    DispBootMessage
     call    ReadDir
     call    FindLoader
+    push    word [Loader_DIR_FstClus]
+    call    DispW
+    pop     ax
+
+
 end:
     jmp $
     mov ax, 4c00h

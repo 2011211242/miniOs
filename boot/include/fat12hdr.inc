@@ -44,6 +44,5 @@ DeltaSectorNo		equ	17	; DeltaSectorNo = BPB_RsvdSecCnt + (BPB_NumFATs * FATSz) -
 ; ------------------------------------------------------------------------
 ; 关于loader的常量定义
 ; ------------------------------------------------------------------------
-
 BaseOfLoader        equ 09000h
 OffsetOfLoader      equ 0100h 
