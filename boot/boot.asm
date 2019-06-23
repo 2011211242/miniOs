@@ -187,15 +187,10 @@ ReadSec:
     push    ebp
     mov     ebp, esp
 
+    push    bx
     push    cx
     push    dx
 
-    ;push    ax
-    ;push    cx
-    ;push    dx
-    ;push    es
-    ;push    bx
-    
     mov     ax, word [ebp + 12]          ;起始扇区
     mov     bl, [BPB_SecPerTrk]
     div     bl
@@ -221,19 +216,13 @@ ReadSec:
 
     pop     dx
     pop     cx
-
-    ;pop     bx
-    ;pop     es
-    ;pop     ax
+    pop     bx
 
     pop     ebp
     ret
 
 ;加载根目录区
 ReadDir:
-    ;push    ebp
-    ;mov     ebp, esp
-
     sub     esp, 8
     mov     [esp + 6], word SectorNoOfRootDirectory
     mov     [esp + 4], word RootDirSectors		
@@ -241,17 +230,12 @@ ReadDir:
     mov     [esp],     word OffsetOfLoader      
     call    ReadSec
     add     esp, 8
-
-    ;pop     ebp
     ret
 
 GetFATEntry:
     push    ebp
     mov     ebp, esp
-    ;push    ax
     push    bx
-    ;push    dx
-    ;push    es
 
     mov     ax, [ebp + 6]
     mov     [IsOdd], byte 0
@@ -267,7 +251,6 @@ GetFATEntry:
     div     bx                  
     add     ax, SectorNoOfFAT1  ;ax为扇区号
                                 ;dx存储偏移
-
     sub     esp, 8
     mov     [esp + 6], ax
     mov     [esp + 4], word 2
@@ -288,62 +271,22 @@ GetFATEntry:
     and     ax, 0FFFh
     mov     [ebp + 8], ax
 
-    ;pop     es
-    ;pop     dx
     pop     bx
-    ;pop     ax
     pop     ebp
     ret
 
-;DispBootMessage:
-;    push    ebp
-;    mov     ebp, esp
-;    push    ax
-;
-;    sub     esp, 6 
-;    mov     ax, [boot_message_len] 
-;    mov     [esp + 4], ax
-;    mov     [esp + 2], ds
-;    mov     ax, boot_message 
-;    mov     [esp], ax
-;
-;    call    DispStr
-;    add     esp, 6
-;    call    DispRet
-;    
-;    pop     ax
-;    pop     ebp
-;    ret
-;end of DispDebugMessage
+FindLoader:
+    mov     cx, [BPB_RootEntCnt]
+    mov     ax, word BaseOfLoader
+    mov     es, ax
+.loop_next_ent:
+;begining of CmpStr:
+    push    cx
+    push    ax
+    mov     si, word LoaderFileName
+    mov     cx, 0bh
 
-
-; 比较字符串是否相等
-; ret       +16 +10   0 equal 1 not equal
-; es        +14 +8
-; di        +12 +6
-; len1 2W   +10 +4
-; si        +8  +2
-; len2      +6  0
-CmpStr:
-    push    ebp
-    mov     ebp, esp
-
-    ;push    ax
-    ;push    bx
-    ;push    cx
-    ;push    es
-    ;push    di
-    ;push    si
-
-    mov     es, [ebp + 14]
-    mov     di, [ebp + 12]
-    mov     bx, [ebp + 10]
-    mov     si, [ebp + 8]
-    mov     ax, [ebp + 6] 
-
-    cmp     ax, bx 
-    jnz     .return_1_cmp_str
-    mov     cx, ax
+    mov     di, word OffsetOfLoader
 .loop_cmp_str:
     lodsb
     cmp     al, byte [es:di]
@@ -352,86 +295,48 @@ CmpStr:
     inc     di
     loop    .loop_cmp_str
 
-    mov     [ebp + 16], word 00h
+    mov     [IsStrEqu], byte 00h            
     jmp     .end_cmp_str
 .return_1_cmp_str:
-    mov     [ebp + 16], word 01h
+    mov     [IsStrEqu], byte 01h            
 .end_cmp_str:
-    ;pop     si
-    ;pop     di
-    ;pop     es
-    ;pop     cx
-    ;pop     bx
-    ;pop     ax
-
-    pop     ebp
-    ret
+    pop     ax
+    pop     cx
 ;end of CmpStr
 
-FindLoader:
-;    push    ebp
-;    mov     ebp, esp
-
-;    push    cx
-;    push    ax
-;    push    es
-;    push    di
-
-    mov     cx, [BPB_RootEntCnt]
-    sub     esp, 12
-    mov     [esp + 8], word BaseOfLoader
-    mov     [esp + 6], word OffsetOfLoader
-    mov     [esp + 4], word 0bh
-    mov     [esp + 2], word LoaderFileName
-    mov     [esp], word 0bh
-.loop_next_ent:
-    call    CmpStr
-
-;;;;;;;;;;;;;;;;;
-    cmp     [esp + 10], word 000h
+    cmp     [IsStrEqu], byte 00h
     jz      .entry_founded
     
-    add     [esp + 8], word 002h
+    add     ax, word 002h
+    mov     es, ax
     loop    .loop_next_ent
     jmp     .findloader_end
 .entry_founded:                 ;目录条目已经找到
-    mov     es, [esp + 8]
-    mov     di, [esp + 6]
-    add     di, 0x1A            ;偏移量
+    mov     di, word OffsetOfLoader + 0x1A
     mov     ax, [es:di]
     mov     [Loader_DIR_FstClus], ax    ;获取开始簇号
 .findloader_end:
-    add     esp, 12
-;    pop     di
-;    pop     es
-;    pop     ax
-;    pop     cx
-
-;    pop     ebp
+    ;add     esp, 2
     ret
 ;end of FindLoader
 
 LoadLoader:
-    ;push    ebp
-    ;mov     ebp, esp
-    ;push    ax
-    ;push    bx 
-
     mov     ax, [Loader_DIR_FstClus]
     mov     bx, word BaseOfLoader
 .loop_LoadLoader:
     push    ax
+
     add     ax, SectorNoOfData
-    push    bx
     sub     esp, 8
-    mov     [esp + 6], ax
+    mov     [esp + 6], ax ;+ SectorNoOfData
     mov     [esp + 4], word 001h
     mov     [esp + 2], bx
     mov     [esp], word OffsetOfLoader      
     call    ReadSec
     add     esp, 8
-    pop     bx
+
     pop     ax
+
     sub     esp, 4
     mov     [esp], ax
     call    GetFATEntry
@@ -441,29 +346,17 @@ LoadLoader:
     add     bx, 20h
     cmp     ax, 0fffh
     jnz     .loop_LoadLoader
-
-    ;pop     bx
-    ;pop     ax
-    ;pop     ebp
     ret
-
-;end of LoadLoader
-;cursor                  dw 160 * 0
-;boot_message            dw "boot ..."
-;boot_message_len        dw $ - boot_message
-
-;debug_message           dw "loader founded..."
-;debug_message_len       dw $ - debug_message
 
 LoaderFileName          db  "LOADER  BIN", 0 ;LOADER.COM文件名
 Loader_DIR_FstClus      dw  0
-IsOdd                   db 0
-
+IsOdd                   db  0
+IsStrEqu                db  0
+has_Loader              db  0
 
 start:
     mov ax, cs
     mov ds, ax
-    ;mov es, ax
     mov ss, ax
     mov esp, BaseOfStack 
     mov ebp, esp
@@ -474,5 +367,5 @@ start:
 
     jmp BaseOfLoader:OffsetOfLoader
 
-;times 	2510-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
-;dw 	0xaa55				; 结束标志
+times 	510-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
+dw 	0xaa55				    ; 结束标志
