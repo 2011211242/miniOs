@@ -22,7 +22,7 @@ BPB_NumHeads	DW 2		; 磁头数(面数)
 BPB_HiddSec	DD 0		; 隐藏扇区数
 BPB_TotSec32	DD 0		; 如果 wTotalSectorCount 是 0 由这个值记录扇区数
 
-BS_DrvNum	DB 1		; 中断 13 的驱动器号 0 A盘 1 B盘
+BS_DrvNum	DB 0		; 中断 13 的驱动器号 0 A盘 1 B盘
 BS_Reserved1	DB 0		; 未使用
 BS_BootSig	DB 29h		; 扩展引导标记 (29h)
 BS_VolID	DD 0		; 卷序列号

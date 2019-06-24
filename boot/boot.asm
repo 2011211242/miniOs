@@ -1,5 +1,4 @@
-%define _BOOT_DEBUG_
-
+;%define _BOOT_DEBUG_
 %ifdef _BOOT_DEBUG_
     BOOTBASE equ 0100h
 %else
@@ -9,10 +8,70 @@
 BaseOfStack equ BOOTBASE 
 org    BOOTBASE 
 
-jmp start
+jmp short start
 nop
 
 %include "fat12hdr.inc"
+
+start:
+    mov ax, cs
+    mov ds, ax
+    mov ss, ax
+    mov esp, BaseOfStack 
+    mov ebp, esp
+
+    mov ax, 0600h       ; AH = 6,  AL = 0h
+    mov bx, 0f00h       
+    mov cx, 0           ; 左上角: (0, 0)
+    mov dx, 0184fh      ; 右下角: (80, 50)
+    int 10h         ; int 10h
+
+    call    ReadDir
+    call    FindLoader
+    cmp     [Loader_DIR_FstClus], word 0
+    jnz     LoadLoader
+
+    mov     cx, 000Bh
+    mov bp, word BootMessage
+    mov ax, 01301h
+    mov bx, 000fh
+    mov dx, cs
+    mov es, dx
+    mov dx, 000h
+    int 10h
+
+    jmp short $
+
+LoadLoader:
+    mov     ax, [Loader_DIR_FstClus]
+    mov     bx, word BaseOfLoader
+.loop_LoadLoader:
+    push    ax
+
+    add     ax, SectorNoOfData
+    sub     esp, 8
+    mov     [esp + 6], ax ;+ SectorNoOfData
+    mov     [esp + 4], word 001h
+    mov     [esp + 2], bx
+    mov     [esp], word OffsetOfLoader      
+    call    ReadSec
+    add     esp, 8
+
+    pop     ax
+
+    sub     esp, 4
+    mov     [esp], ax
+    call    GetFATEntry
+    mov     ax, [esp + 2]
+    add     esp, 4
+
+    add     bx, 20h
+    cmp     ax, 0fffh
+    jnz     .loop_LoadLoader
+
+    ;ret
+    ;call    LoadLoader
+    jmp BaseOfLoader:OffsetOfLoader
 
 
 ;stack resb 32
@@ -320,52 +379,13 @@ FindLoader:
     ret
 ;end of FindLoader
 
-LoadLoader:
-    mov     ax, [Loader_DIR_FstClus]
-    mov     bx, word BaseOfLoader
-.loop_LoadLoader:
-    push    ax
-
-    add     ax, SectorNoOfData
-    sub     esp, 8
-    mov     [esp + 6], ax ;+ SectorNoOfData
-    mov     [esp + 4], word 001h
-    mov     [esp + 2], bx
-    mov     [esp], word OffsetOfLoader      
-    call    ReadSec
-    add     esp, 8
-
-    pop     ax
-
-    sub     esp, 4
-    mov     [esp], ax
-    call    GetFATEntry
-    mov     ax, [esp + 2]
-    add     esp, 4
-
-    add     bx, 20h
-    cmp     ax, 0fffh
-    jnz     .loop_LoadLoader
-    ret
 
 LoaderFileName          db  "LOADER  BIN", 0 ;LOADER.COM文件名
 Loader_DIR_FstClus      dw  0
 IsOdd                   db  0
 IsStrEqu                db  0
-has_Loader              db  0
 
-start:
-    mov ax, cs
-    mov ds, ax
-    mov ss, ax
-    mov esp, BaseOfStack 
-    mov ebp, esp
-
-    call    ReadDir
-    call    FindLoader
-    call    LoadLoader
-
-    jmp BaseOfLoader:OffsetOfLoader
+BootMessage             db  "No Loader", 0AH,0DH
 
 times 	510-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
 dw 	0xaa55				    ; 结束标志
