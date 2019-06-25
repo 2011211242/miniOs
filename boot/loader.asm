@@ -1,7 +1,7 @@
 org	0100h
 jmp start
 
-times 	23510-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
+times 	210-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
 start:
 	mov	ax, 0B800h
 	mov	gs, ax
