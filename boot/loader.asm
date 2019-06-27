@@ -1,11 +1,20 @@
 org	0100h
 jmp start
 
-times 	210-($-$$)	db	0	; 填充剩下的空间，使生成的二进制代码恰好为512字节
+BootMessage             db  "Loader started successful", 0AH,0DH
+BootMessageLen          equ  $-BootMessage             
+
 start:
-	mov	ax, 0B800h
-	mov	gs, ax
-	mov	ah, 0Fh				; 0000: 黑底    1111: 白字
-	mov	al, 'A'
-	mov	[gs:((80 * 0 + 0) * 2)], ax	; 屏幕第 0 行, 第 39 列。
+    mov     ax, cs
+    mov     ds, ax
+
+    mov     cx, BootMessageLen
+    mov     bp, word BootMessage
+    mov     ax, 01301h
+    mov     bx, 000fh
+    mov     dx, cs
+    mov     es, dx
+    mov     dx, 000h
+    int     10h
+
 	jmp	$		

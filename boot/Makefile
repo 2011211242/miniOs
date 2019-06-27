@@ -1,28 +1,32 @@
 PROJECT := $(shell readlink $(dir $(lastword $(MAKEFILE_LIST))) -f)
 
-SRC:=$(PROJECT)/boot.asm \
-	$(PROJECT)/loader.asm
+BOOT_SRC:=$(PROJECT)/boot.asm 
+LOADER_SRC:=$(PROJECT)/loader.asm
+BOOTIMG:=$(PROJECT)/boot.img
 
-#BIN:=$(subst .asm,.com,$(SRC))
+BOOT:=$(PROJECT)/boot.bin
+LOADER:=$(PROJECT)/loader.bin
 
-BIN:=$(PROJECT)/boot.bin \
-	$(PROJECT)/loader.bin
+
+all: BIN 
+
 
 ASMBFLAGS   = -I $(PROJECT)/include/
 
-.PHONY : everything clean
+.PHONY : clean all
 
-everything : $(BIN)
-	dd if=$(PROJECT)/boot.bin of=$(PROJECT)/boot.img bs=512 count=1 conv=notrunc
-	sudo mount -o loop $(PROJECT)/boot.img /mnt/floppy/
-	sudo cp $(PROJECT)/loader.bin /mnt/floppy/ -v
-	#sudo cp boot.com /mnt/floppy/ -v
+BIN: $(BOOT) $(LOADER)
+	dd if=$(BOOT) of=$(BOOTIMG) bs=512 count=1 conv=notrunc
+	sudo mount -o loop $(BOOTIMG) /mnt/floppy/
+	sudo cp $(LOADER) /mnt/floppy/ -v
 	sudo umount /mnt/floppy/
 
-$(BIN) : $(SRC)
-	nasm $(ASMBFLAGS) $(PROJECT)/boot.asm -o $(PROJECT)/boot.bin
-	nasm $(ASMBFLAGS) $(PROJECT)/loader.asm -o $(PROJECT)/loader.bin
+$(BOOT) : $(BOOT_SRC)
+	nasm $(ASMBFLAGS) $^ -o $@
+
+$(LOADER) : $(LOADER_SRC)
+	nasm $(ASMBFLAGS) $^ -o $@
 
 clean:
-	rm -rf *.com *.bin
+	rm -rf *.bin
 
