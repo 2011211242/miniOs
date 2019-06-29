@@ -12,6 +12,7 @@ jmp short start
 nop
 
 %include "fat12hdr.inc"
+%include "loader.inc"
 
 start:
     mov ax, cs
