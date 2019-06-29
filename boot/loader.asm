@@ -1,7 +1,7 @@
 org	0100h
 jmp start
 
-BootMessage             db  "Loader started successful", 0AH,0DH
+BootMessage             db  "Loader started ...", 0AH,0DH
 BootMessageLen          equ  $-BootMessage             
 
 start:

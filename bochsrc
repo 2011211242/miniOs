@@ -12,7 +12,7 @@
 #floppya: 1_44=freedos.img, status=inserted
 #floppyb: 1_44=boot.img, status=inserted
 
-floppya: 1_44=boot/boot.img, status=inserted
+floppya: 1_44=boot.img, status=inserted
 # choose the boot disk.
 boot: a
 

@@ -1,32 +1,24 @@
-PROJECT := $(shell readlink $(dir $(lastword $(MAKEFILE_LIST))) -f)
+BOOTDIR:=$(shell readlink $(dir $(lastword $(MAKEFILE_LIST))) -f)
+BOOT:=$(BOOTDIR)/boot.bin
 
-BOOT_SRC:=$(PROJECT)/boot.asm 
-LOADER_SRC:=$(PROJECT)/loader.asm
-BOOTIMG:=$(PROJECT)/boot.img
+LOADER:=$(BOOTDIR)/loader.bin
+BOOTASMBFLAGS = -I $(BOOTDIR)/include/ 
 
-BOOT:=$(PROJECT)/boot.bin
-LOADER:=$(PROJECT)/loader.bin
+BOOT_SRC:=$(BOOTDIR)/boot.asm 
+LOADER_SRC:=$(BOOTDIR)/loader.asm
 
-
-all: BIN 
-
-
-ASMBFLAGS   = -I $(PROJECT)/include/
-
-.PHONY : clean all
-
-BIN: $(BOOT) $(LOADER)
-	dd if=$(BOOT) of=$(BOOTIMG) bs=512 count=1 conv=notrunc
-	sudo mount -o loop $(BOOTIMG) /mnt/floppy/
-	sudo cp $(LOADER) /mnt/floppy/ -v
-	sudo umount /mnt/floppy/
+all: $(BOOT) $(LOADER)
 
 $(BOOT) : $(BOOT_SRC)
-	nasm $(ASMBFLAGS) $^ -o $@
+	nasm $(BOOTASMBFLAGS) $^ -o $@
 
 $(LOADER) : $(LOADER_SRC)
-	nasm $(ASMBFLAGS) $^ -o $@
+	nasm $(BOOTASMBFLAGS) $^ -o $@
 
-clean:
-	rm -rf *.bin
+bclean:
+	rm -rf $(BOOTDIR)/*.bin
+
+
+.PHONY : all bclean 
+
 
