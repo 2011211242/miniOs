@@ -1,16 +1,22 @@
 KERNELDIR :=$(shell readlink $(dir $(lastword $(MAKEFILE_LIST))) -f)
-KERNEL_SRC:=$(KERNELDIR)/kernel.asm 
+KERNELSRC:=$(KERNELDIR)/kernel.asm 
+KERNELOBJ=$(KERNELDIR)/kernel.o
 KERNEL=$(KERNELDIR)/kernel.bin
 
-ASMBFLAGS=-I $(KERNELDIR)/include/ 
+ASMBFLAGS= -f elf64 \
+		   -I $(KERNELDIR)/include/ 
 
 all: $(KERNEL)
 
-$(KERNEL) : $(KERNEL_SRC)
+
+$(KERNEL) : $(KERNELOBJ)
+	ld -s -Ttext 0x30400 $^ -o $@
+
+$(KERNELOBJ) : $(KERNELSRC)
 	nasm $(ASMBFLAGS) $^ -o $@
 
 kclean:
-	rm -rf $(KERNELDIR)/*.bin
+	rm -rf $(KERNELDIR)/*.bin $(KERNELDIR)/*.o
 
 .PHONY : all kclean
 
