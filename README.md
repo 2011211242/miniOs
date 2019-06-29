@@ -1,2 +1,3 @@
 # miniOs
-a mini x86 system 
+
+develop a mini x86 system 
