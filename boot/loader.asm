@@ -1,6 +1,7 @@
 org	0100h
 jmp start
 
+%define LOADER_BIN
 %include "loader.inc"
 %include "pm.inc"
 
@@ -17,9 +18,6 @@ GdtPtr                  dw      GdtLen  - 1
 SelectorFlatC           equ     LABEL_DESC_FLAT_C   - LABEL_GDT
 SelectorFlatRW          equ     LABEL_DESC_FLAT_RW  - LABEL_GDT
 SelectorVideo           equ     LABEL_DESC_VIDEO    - LABEL_GDT + SA_RPL3
-
-BootMessage             db  "Loader started ...", 0AH,0DH
-BootMessageLen          equ  $-BootMessage             
 
 start:
     mov     ax, cs
@@ -45,6 +43,7 @@ GO_TO_PM_MODE:
 ALIGN   32      ;变量的对齐方式
 [BITS   32]     ;选择32位指令
 %include "pmdisp.asm"
+
 LABEL_PM_START:
     mov     ax, SelectorVideo
     mov     gs, ax
@@ -55,13 +54,18 @@ LABEL_PM_START:
     mov     ss, ax
     mov     esp, TopOfStack
 
-    push    'P'
-    call    DispChar
-    pop     ax
+    ;mov     [POS], dword 10
+    push    BootMessageLen
+    push    BaseOfLoaderPhyAddr + BootMessage
 
+    call    DispStr
     jmp     $
 
 [SECTION .data]
-ALIGN   32
+ALIGN   8
+BootMessage             db  "Loader loaded", 0AH
+BootMessageLen          equ  $ - BootMessage             
+
+
 StackSpace      times   1000h   db  0
 TopOfStack      equ BaseOfLoaderPhyAddr + $ ; 栈顶
