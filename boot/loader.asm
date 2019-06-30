@@ -1,10 +1,8 @@
 org	0100h
-
 jmp start
 
-%include "pm.inc"
 %include "loader.inc"
-
+%include "pm.inc"
 
 ;                                   段基址      段界限      属性
 LABEL_GDT:              Descriptor  0,          0,          0       ;空描述符   
@@ -29,55 +27,24 @@ start:
     mov     es, ax
     mov     ss, ax
 
-
-    ;mov     cx, BootMessageLen
-    ;mov     bp, word BootMessage
-    ;mov     ax, 01301h
-    ;mov     bx, 000fh
-    ;mov     dx, cs
-    ;mov     es, dx
-    ;mov     dx, 000h
-    ;int     10h
-
 GO_TO_PM_MODE:
-    
 	lgdt	[GdtPtr]
+	cli                     ; 关中断
 
-; 关中断
-	cli
-
-; 打开地址线A20
-	in	al, 92h
+	in	al, 92h             ; 打开地址线A20
 	or	al, 00000010b
 	out	92h, al
 
-; 准备切换到保护模式
-	mov	eax, cr0
+	mov	eax, cr0            ; 准备切换到保护模式
 	or	eax, 1
 	mov	cr0, eax
-
-; 真正进入保护模式
-	jmp	dword SelectorFlatC:(BaseOfLoaderPhyAddr+LABEL_PM_START)
+	jmp	dword SelectorFlatC:(BaseOfLoaderPhyAddr+LABEL_PM_START)    ; 真正进入保护模式
 
 
-    ;lgdt    [GdtPtr]
-
-    ;cli
-
-    ;in      al, 92h
-    ;or      al, 002h
-    ;out     92h, al
-
-    ;mov     eax, cr0
-    ;or      eax, 1
-    ;mov     cr0, eax
-    ;jmp     dword SelectorFlatC:(BaseOfLoaderPhyAddr + LABEL_PM_START)
-    
-
-[SECTION .s32]
-ALIGN   32
-[BITS   32]
-
+;[SECTION .s32]
+ALIGN   32      ;变量的对齐方式
+[BITS   32]     ;选择32位指令
+%include "pmdisp.asm"
 LABEL_PM_START:
     mov     ax, SelectorVideo
     mov     gs, ax
@@ -86,9 +53,15 @@ LABEL_PM_START:
     mov     es, ax
     mov     fs, ax
     mov     ss, ax
+    mov     esp, TopOfStack
 
-    mov     ah, 0Fh
-    mov     al, 'P'
-    mov     [gs:((80 * 0 + 4) * 2)], ax
+    push    'P'
+    call    DispChar
+    pop     ax
+
     jmp     $
 
+[SECTION .data]
+ALIGN   32
+StackSpace      times   1000h   db  0
+TopOfStack      equ BaseOfLoaderPhyAddr + $ ; 栈顶
