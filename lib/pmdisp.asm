@@ -1,7 +1,7 @@
 [SECTION .data]
 
 %ifdef LOADER_BIN
-POS             equ     BaseOfLoaderPhyAddr + $
+POS             equ     $
 disp_pos        dw      100h
 %else
 POS     equ disp_pos 

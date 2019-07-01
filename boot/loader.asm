@@ -1,23 +1,33 @@
 org	0100h
+
+
 jmp start
 
 %define LOADER_BIN
 %include "loader.inc"
 %include "pm.inc"
 
-;                                   段基址      段界限      属性
-LABEL_GDT:              Descriptor  0,          0,          0       ;空描述符   
-LABEL_DESC_FLAT_C:      Descriptor  0,          0fffffh,  DA_CR|DA_32|DA_LIMIT_4K 
-LABEL_DESC_FLAT_RW:     Descriptor  0,          0fffffh,  DA_DRW|DA_32|DA_LIMIT_4K    ;
-LABEL_DESC_VIDEO:       Descriptor  0B8000h,    0ffffh,   DA_DRW|DA_DPL3              ;显存首地址
+;                                   段基址                  段界限                              属性
+LABEL_GDT:              Descriptor  0,                      0,                                  0       ;空描述符   
+LABEL_DESC_FLAT_C:      Descriptor  0,                      0fffffh,                            DA_CR|DA_32|DA_LIMIT_4K 
+LABEL_DESC_FLAT_RW:     Descriptor  0,                      0fffffh,                            DA_DRW|DA_32|DA_LIMIT_4K    ;
+
+LABEL_DESC_LOADER_C:    Descriptor  BaseOfLoaderPhyAddr,    0fffffh - BaseOfLoaderPhyAddr,      DA_CR|DA_32|DA_LIMIT_4K     ;
+LABEL_DESC_LOADER_RW:   Descriptor  BaseOfLoaderPhyAddr,    0fffffh - BaseOfLoaderPhyAddr,      DA_DRW|DA_32|DA_LIMIT_4K    ;
+
+LABEL_DESC_STACK:       Descriptor  0,                      StackSize,                              DA_DRW|DA_32|DA_LIMIT_4K    ; 
+LABEL_DESC_VIDEO:       Descriptor  0B8000h,                0ffffh,                             DA_DRW|DA_DPL3              ;显存首地址
 
 GdtLen                  equ     $ - LABEL_GDT
 GdtPtr                  dw      GdtLen  - 1
                         dd      BaseOfLoaderPhyAddr + LABEL_GDT
 
-SelectorFlatC           equ     LABEL_DESC_FLAT_C   - LABEL_GDT
-SelectorFlatRW          equ     LABEL_DESC_FLAT_RW  - LABEL_GDT
-SelectorVideo           equ     LABEL_DESC_VIDEO    - LABEL_GDT + SA_RPL3
+SelectorFlatC           equ     LABEL_DESC_FLAT_C       - LABEL_GDT
+SelectorFlatRW          equ     LABEL_DESC_FLAT_RW      - LABEL_GDT
+SelectorLoaderC         equ     LABEL_DESC_LOADER_C     - LABEL_GDT
+SelectorLoaderRW        equ     LABEL_DESC_LOADER_RW    - LABEL_GDT
+SelectorStack           equ     LABEL_DESC_STACK        - LABEL_GDT
+SelectorVideo           equ     LABEL_DESC_VIDEO        - LABEL_GDT + SA_RPL3
 
 start:
     mov     ax, cs
@@ -26,6 +36,16 @@ start:
     mov     ss, ax
 
 GO_TO_PM_MODE:
+    xor     eax, eax                            ;初始化栈区
+    mov     ax,  cs
+    shl     eax, 4
+    add     eax, StackSpace
+    mov     [LABEL_DESC_STACK + 2], ax
+    shr     eax, 16
+    mov     byte [LABEL_DESC_STACK + 4], al
+    mov     byte [LABEL_DESC_STACK + 7], ah
+
+    ;LABEL_DESC_STACK
 	lgdt	[GdtPtr]
 	cli                     ; 关中断
 
@@ -47,16 +67,18 @@ ALIGN   32      ;变量的对齐方式
 LABEL_PM_START:
     mov     ax, SelectorVideo
     mov     gs, ax
-    mov     ax, SelectorFlatRW
+    mov     ax, SelectorLoaderRW
     mov     ds, ax
     mov     es, ax
     mov     fs, ax
-    mov     ss, ax
-    mov     esp, TopOfStack
+
+    mov     eax, SelectorStack           
+    mov     ss,  eax
+    mov     esp, StackSize               
 
     ;mov     [POS], dword 10
     push    BootMessageLen
-    push    BaseOfLoaderPhyAddr + BootMessage
+    push    BootMessage
 
     call    DispStr
     jmp     $
@@ -66,6 +88,5 @@ ALIGN   8
 BootMessage             db  "Loader loaded", 0AH
 BootMessageLen          equ  $ - BootMessage             
 
-
-StackSpace      times   1000h   db  0
-TopOfStack      equ BaseOfLoaderPhyAddr + $ ; 栈顶
+StackSize               equ     1024
+StackSpace:             times   StackSize   db  0
