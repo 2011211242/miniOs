@@ -1,6 +1,4 @@
 org	0100h
-
-
 jmp start
 
 %define LOADER_BIN
@@ -62,7 +60,7 @@ GO_TO_PM_MODE:
 ;[SECTION .s32]
 ALIGN   32      ;变量的对齐方式
 [BITS   32]     ;选择32位指令
-%include "pmdisp.asm"
+%include "pmlib.inc"
 
 LABEL_PM_START:
     mov     ax, SelectorVideo
@@ -85,7 +83,7 @@ LABEL_PM_START:
 
 [SECTION .data]
 ALIGN   8
-BootMessage             db  "Loader loaded", 0AH
+BootMessage             db  "Loader loaded", 0DH, 0AH, "Loding Kernel ..."
 BootMessageLen          equ  $ - BootMessage             
 
 StackSize               equ     1024

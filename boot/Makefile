@@ -2,8 +2,7 @@ BOOTDIR:=$(shell readlink $(dir $(lastword $(MAKEFILE_LIST))) -f)
 BOOT:=$(BOOTDIR)/boot.bin
 
 LOADER:=$(BOOTDIR)/loader.bin
-BOOTASMBFLAGS = -I $(BOOTDIR)/include/ \
-				-I $(PMLIBDIR)/
+BOOTASMBFLAGS = -I $(BOOTDIR)/include/
 
 BOOT_SRC:=$(BOOTDIR)/boot.asm 		\
 	$(BOOTDIR)/include/fat12hdr.inc \
@@ -13,7 +12,9 @@ BOOT_SRC:=$(BOOTDIR)/boot.asm 		\
 LOADER_SRC:=$(BOOTDIR)/loader.asm	\
 	$(BOOTDIR)/include/fat12hdr.inc \
 	$(BOOTDIR)/include/loader.inc	\
-	$(PMLIBDIR)/pmdisp.asm
+	$(BOOTDIR)/include/pmlib.inc	\
+	$(BOOTDIR)/include/pm.inc	
+
 
 
 all: $(BOOT) $(LOADER)

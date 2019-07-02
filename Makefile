@@ -1,5 +1,4 @@
 PROJECT:=$(shell readlink $(dir $(lastword $(MAKEFILE_LIST))) -f)
-PMLIBDIR:=$(PROJECT)/lib
 include boot/Makefile
 include kernel/Makefile
 
