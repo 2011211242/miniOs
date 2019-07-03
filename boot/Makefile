@@ -13,7 +13,8 @@ LOADER_SRC:=$(BOOTDIR)/loader.asm	\
 	$(BOOTDIR)/include/fat12hdr.inc \
 	$(BOOTDIR)/include/loader.inc	\
 	$(BOOTDIR)/include/pmlib.inc	\
-	$(BOOTDIR)/include/pm.inc	
+	$(BOOTDIR)/include/pm.inc		\
+	$(BOOTDIR)/include/lib.inc		
 
 
 

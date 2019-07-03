@@ -4,6 +4,8 @@ jmp start
 %define LOADER_BIN
 %include "loader.inc"
 %include "pm.inc"
+%include "lib.inc"
+%include "fat12hdr.inc"
 
 ;                                   段基址                  段界限                              属性
 LABEL_GDT:              Descriptor  0,                      0,                                  0       ;空描述符   
@@ -27,11 +29,209 @@ SelectorLoaderRW        equ     LABEL_DESC_LOADER_RW    - LABEL_GDT
 SelectorStack           equ     LABEL_DESC_STACK        - LABEL_GDT
 SelectorVideo           equ     LABEL_DESC_VIDEO        - LABEL_GDT + SA_RPL3
 
+ReadSec:
+    push    ebp
+    mov     ebp, esp
+
+    push    bx
+    push    cx
+    push    dx
+    push    es
+
+    mov     ax, word [ebp + 12]          ;起始扇区
+    mov     bl, [BPB_SecPerTrk]
+    div     bl
+
+    inc     ah
+    mov     cl, ah
+    mov     dh, al
+
+    shr     al, 1
+    mov     ch, al
+    and     dh, 1
+    mov     dl, [BS_DrvNum]
+
+    mov     es, [ebp + 8]
+    mov     ax, [ebp + 10]
+    mov     bx, [ebp + 6]
+
+.GoOnReading:
+    mov     ah, 2
+    int     13h
+    jc      .GoOnReading
+
+    pop     es
+    pop     dx
+    pop     cx
+    pop     bx
+
+    pop     ebp
+    ret
+
+;加载根目录区
+;ReadDir:
+;    sub     esp, 8
+;    mov     [esp + 6], word SectorNoOfRootDirectory
+;    mov     [esp + 4], word RootDirSectors		
+;    mov     [esp + 2], word BaseOfLoader        
+;    mov     [esp],     word OffsetOfLoader      
+;    call    ReadSec
+;    add     esp, 8
+;    ret
+
+GetFATEntry:
+    push    ebp
+    mov     ebp, esp
+    push    bx
+
+    mov     ax, [ebp + 6]
+    mov     [IsOdd], byte 0
+    mov     bx, 3
+    mul     bx
+    mov     bx, 2
+    mov     dx, 0               ;被除数32位,高位存在dx中
+    div     bx
+    mov     byte [IsOdd], dl    ;余数是否为0
+                                ;ax为FATEntry 在FAT中的偏移量
+    mov     dx,  0
+    mov     bx, [BPB_BytsPerSec]
+    div     bx                  
+    add     ax, SectorNoOfFAT1  ;ax为扇区号
+                                ;dx存储偏移
+    sub     esp, 8
+    mov     [esp + 6], ax
+    mov     [esp + 4], word 2
+    mov     [esp + 2], word BaseOfFAT
+    mov     [esp],     word OffsetOfFAT
+    call    ReadSec
+    add     esp, 8
+    
+    mov     ax, word BaseOfFAT
+    mov     es, ax
+    mov     si, dx
+    mov     ax, [es:si]     ;ax为对应数据的扇区号
+
+    cmp     byte [IsOdd], 1
+    jnz     .FATEntry_even
+    shr     ax, 4
+.FATEntry_even:
+    and     ax, 0FFFh
+    mov     [ebp + 8], ax
+
+    pop     bx
+    pop     ebp
+    ret
+
 start:
     mov     ax, cs
     mov     ds, ax
     mov     es, ax
     mov     ss, ax
+    mov     esp, OffsetOfLoader      
+
+ReadDir:
+    sub     esp, 8
+    mov     [esp + 6], word SectorNoOfRootDirectory
+    mov     [esp + 4], word RootDirSectors		
+    mov     [esp + 2], word BaseOfKernel
+    mov     [esp],     word OffsetOfKernel
+    call    ReadSec
+    add     esp, 8
+
+FindLoader:
+    mov     cx, [BPB_RootEntCnt]
+    mov     ax, word BaseOfKernel
+    mov     es, ax
+.loop_next_ent:
+;begining of CmpStr:
+    push    cx
+    push    ax
+    mov     si, word KernelFileName
+    mov     cx, 0bh
+
+    mov     di, word OffsetOfKernel
+.loop_cmp_str:
+    lodsb
+    cmp     al, byte [es:di]
+    jnz     .return_1_cmp_str
+
+    inc     di
+    loop    .loop_cmp_str
+
+    mov     [IsStrEqu], byte 00h            
+    jmp     .end_cmp_str
+.return_1_cmp_str:
+    mov     [IsStrEqu], byte 01h            
+.end_cmp_str:
+    pop     ax
+    pop     cx
+;end of CmpStr
+
+    cmp     [IsStrEqu], byte 00h
+    jz      .entry_founded
+    
+    add     ax, word 002h
+    mov     es, ax
+    loop    .loop_next_ent
+    jmp     .findloader_end
+.entry_founded:                 ;目录条目已经找到
+    mov     di, word OffsetOfKernel + 0x1A
+    mov     ax, [es:di]
+    mov     [Loader_DIR_FstClus], ax    ;获取开始簇号
+.findloader_end:
+    ;ret
+;end of FindLoader
+    
+    cmp     [Loader_DIR_FstClus], word 0
+    jnz     LoadLoader
+
+    push    ax
+    push    NoKernelMessageLen    
+    push    ds
+    push    NoKernelMessage       
+    call    DispStr
+    pop     ax
+    pop     ax
+    pop     ax
+    pop     ax
+    jmp     $
+
+LoadLoader:
+    push    ax
+    push    KernelFindMessageLen    
+    push    ds
+    push    KernelFindMessage       
+    call    DispStr
+    pop     ax
+    pop     ax
+    pop     ax
+    pop     ax
+    
+    mov     ax, [Loader_DIR_FstClus]
+    mov     bx, word BaseOfKernel
+.loop_LoadLoader:
+    push    ax
+
+    add     ax, SectorNoOfData
+    sub     esp, 8
+    mov     [esp + 6], ax ;+ SectorNoOfData
+    mov     [esp + 4], word 001h
+    mov     [esp + 2], bx
+    mov     [esp], word OffsetOfKernel
+    call    ReadSec
+    add     esp, 8
+
+    pop     ax
+    sub     esp, 4
+    mov     [esp], ax
+    call    GetFATEntry
+    mov     ax, [esp + 2]
+    add     esp, 4
+
+    add     bx, 20h
+    cmp     ax, 0fffh
+    jnz     .loop_LoadLoader
+
 
 GO_TO_PM_MODE:
     xor     eax, eax                            ;初始化栈区
@@ -77,14 +277,38 @@ LABEL_PM_START:
     ;mov     [POS], dword 10
     push    BootMessageLen
     push    BootMessage
-
     call    DispStr
+
+    push    esp
+    call    PM_DispDW
+    pop     esp
+    call    PM_DispRet
+
+    push    word ' '
+    push    esp
+    call    PM_DispDW
     jmp     $
+
+    ;ret
+    ;call    LoadLoader
+    ;jmp BaseOfLoader:OffsetOfLoader
+
 
 [SECTION .data]
 ALIGN   8
-BootMessage             db  "Loader loaded", 0DH, 0AH, "Loding Kernel ..."
+BootMessage             db  "Loader loaded", 0AH, "Loding Kernel ...", 0AH
 BootMessageLen          equ  $ - BootMessage             
 
 StackSize               equ     1024
 StackSpace:             times   StackSize   db  0
+
+KernelFileName          db  "KERNEL  BIN", 0 ;LOADER.COM文件名
+Loader_DIR_FstClus      dw  0
+IsOdd                   db  0
+IsStrEqu                db  0
+NoKernelMessage         db  "No kernel", 0AH,0DH
+NoKernelMessageLen      equ $ - NoKernelMessage         
+
+KernelFindMessage       db "Kernel find", 0AH
+KernelFindMessageLen    equ $ - KernelFindMessage       
+

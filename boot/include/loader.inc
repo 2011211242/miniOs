@@ -6,6 +6,6 @@ OffsetOfLoader      equ     0100h                   ;loader 的加载位置（�
 
 BaseOfLoaderPhyAddr equ     BaseOfLoader * 10h;
 
-BaseOfKernelFile    equ     08000h                  ;kernel 的加载位置 (段地址)
-OffsetOfKernelFile  equ     0000h                   ;kernel 的加载位置（偏移地址）
+BaseOfKernel    equ     08000h                  ;kernel 的加载位置 (段地址)
+OffsetOfKernel  equ     0000h                   ;kernel 的加载位置（偏移地址）
 
