@@ -1,5 +1,6 @@
 cursor  db  0
 
+;[section .text]
 stack resb 32
 ;打印一个字符
 DispChar:

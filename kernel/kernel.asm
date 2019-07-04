@@ -1,10 +1,10 @@
 
 ;[section .bss]
-;KernelMessage             db  "Kernel started ...", 0AH,0DH
+KernelMessage             db  "I am Kernel started ...", 0AH
 ;KernelMessageLen          equ  $-KernelMessage             
 
 
-[section .text]
+;[section .text]
 global _start
 
 _start: 

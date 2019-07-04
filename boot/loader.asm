@@ -122,6 +122,7 @@ GetFATEntry:
     pop     ebp
     ret
 
+
 start:
     mov     ax, cs
     mov     ds, ax
@@ -194,7 +195,6 @@ FindLoader:
     pop     ax
     pop     ax
     pop     ax
-    jmp     $
 
 LoadLoader:
     push    ax
@@ -231,6 +231,17 @@ LoadLoader:
     add     bx, 20h
     cmp     ax, 0fffh
     jnz     .loop_LoadLoader
+
+
+    push    ax
+    push    word 20h
+    push    BaseOfKernel
+    push    OffsetOfKernel
+    call    DispStr
+    pop     ax
+    pop     ax
+    pop     ax
+    pop     ax
 
 
 GO_TO_PM_MODE:
@@ -277,11 +288,16 @@ LABEL_PM_START:
     ;mov     [POS], dword 10
     push    BootMessageLen
     push    BootMessage
-    call    DispStr
+    call    PM_DispStr
+    call    PM_DispStr
+    call    PM_DispStr
+    call    PM_DispStr
+
+    ;push    word 'P'
+    ;call    PM_DispChar
+    ;jmp     $
 
     push    esp
-    call    PM_DispDW
-    pop     esp
     call    PM_DispRet
 
     push    word ' '

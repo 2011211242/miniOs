@@ -137,7 +137,7 @@ PM_DispDW:
 
 .PM_DispW_loop_Digit_handle_print:
     push    ax
-    call    DispChar
+    call    PM_DispChar
     pop     ax
     jmp     .PM_DispW_loop
 

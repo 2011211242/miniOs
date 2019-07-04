@@ -9,11 +9,15 @@ ASMBFLAGS= -f elf64 \
 all: $(KERNEL)
 
 
-$(KERNEL) : $(KERNELOBJ)
-	ld -s -Ttext 0x30400 $^ -o $@
+#$(KERNEL) : $(KERNELOBJ)
+#	ld -s -Ttext 0x30400 $^ -o $@
 
-$(KERNELOBJ) : $(KERNELSRC)
-	nasm $(ASMBFLAGS) $^ -o $@
+#$(KERNELOBJ) : $(KERNELSRC)
+#	nasm $(ASMBFLAGS) $^ -o $@
+
+$(KERNEL) : $(KERNELSRC)
+	nasm -I $(KERNELDIR)/include/ $^ -o $@
+
 
 kclean:
 	rm -rf $(KERNELDIR)/*.bin $(KERNELDIR)/*.o
