@@ -1,7 +1,5 @@
-cursor  db  0
 
-;[section .text]
-stack resb 32
+cursor  dw 0
 ;打印一个字符
 DispChar:
     push    ebp

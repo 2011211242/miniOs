@@ -109,12 +109,12 @@ PM_DispDW:
 
     mov     cl, 020h
 .PM_DispW_loop:
-    cmp     cl, 010h
-    jnz     .PM_DispDW_word
+    ;cmp     cl, 010h
+    ;jnz     .PM_DispDW_word
 
-    push    word ' '
-    call    PM_DispChar
-    pop     ax
+    ;push    word ' '
+    ;call    PM_DispChar
+    ;pop     ax
 
 .PM_DispDW_word:
     cmp     cl, 0
@@ -142,6 +142,11 @@ PM_DispDW:
     jmp     .PM_DispW_loop
 
 .PM_DispW_handle_end:
+    push    word ' '
+    call    PM_DispChar
+    call    PM_DispChar
+    pop     ax
+
     pop     cx
     pop     eax
     pop     ebp
