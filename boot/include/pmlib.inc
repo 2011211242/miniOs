@@ -36,7 +36,7 @@ PM_DispChar:
     push    ax
     push    bx
 
-    mov	    ax, [ebp + 8]
+    mov	    ax, [ss:ebp + 8]
     cmp     al, 0ah         ;换行
     jz      .PM_DispChar_handle_Ret
 
@@ -121,7 +121,7 @@ PM_DispDW:
     jz      .PM_DispW_handle_end
     sub     cl, 4
 
-    mov     eax, [ebp + 8]
+    mov     eax, [ss:ebp + 8]
     shr     eax, cl
     and     ax, 00fh
 

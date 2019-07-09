@@ -3,20 +3,20 @@ KERNELSRC:=$(KERNELDIR)/kernel.asm
 KERNELOBJ=$(KERNELDIR)/kernel.o
 KERNEL=$(KERNELDIR)/kernel.bin
 
-ASMBFLAGS= -f elf64 \
+ASMBFLAGS= -f elf32 \
 		   -I $(KERNELDIR)/include/ 
 
 all: $(KERNEL)
 
 
-#$(KERNEL) : $(KERNELOBJ)
-#	ld -s -Ttext 0x30400 $^ -o $@
+$(KERNEL) : $(KERNELOBJ)
+	ld -s -m elf_i386 -Ttext 0x30400 $^ -o $@
 
-#$(KERNELOBJ) : $(KERNELSRC)
-#	nasm $(ASMBFLAGS) $^ -o $@
+$(KERNELOBJ) : $(KERNELSRC)
+	nasm $(ASMBFLAGS) $^ -o $@
 
-$(KERNEL) : $(KERNELSRC)
-	nasm -I $(KERNELDIR)/include/ $^ -o $@
+#$(KERNEL) : $(KERNELSRC)
+#	nasm -I $(KERNELDIR)/include/ $^ -o $@
 
 
 kclean:

@@ -37,6 +37,7 @@ ReadSec:
     push    cx
     push    dx
     push    es
+    push    ax
 
     mov     ax, word [ebp + 12]          ;起始扇区
     mov     bl, [BPB_SecPerTrk]
@@ -60,6 +61,7 @@ ReadSec:
     int     13h
     jc      .GoOnReading
 
+    pop     ax
     pop     es
     pop     dx
     pop     cx
@@ -83,6 +85,10 @@ GetFATEntry:
     push    ebp
     mov     ebp, esp
     push    bx
+    push    ax
+    push    es
+    push    si
+    push    dx
 
     mov     ax, [ebp + 6]
     mov     [IsOdd], byte 0
@@ -118,6 +124,10 @@ GetFATEntry:
     and     ax, 0FFFh
     mov     [ebp + 8], ax
 
+    pop     dx
+    pop     si
+    pop     es
+    pop     ax
     pop     bx
     pop     ebp
     ret
@@ -140,7 +150,7 @@ ReadDir:
     call    ReadSec
     add     esp, 8
 
-FindLoader:
+FindKernel:
     mov     cx, [BPB_RootEntCnt]
     mov     ax, word BaseOfKernel
     mov     es, ax
@@ -154,6 +164,13 @@ FindLoader:
     mov     di, word OffsetOfKernel
 .loop_cmp_str:
     lodsb
+
+    ;;;;;;;;;;;;;;;;;;
+    ;push    ax
+    ;call    DispChar
+    ;pop     ax
+    ;;;;;;;;;;;;;;;;;
+
     cmp     al, byte [es:di]
     jnz     .return_1_cmp_str
 
@@ -179,13 +196,20 @@ FindLoader:
 .entry_founded:                 ;目录条目已经找到
     mov     di, word OffsetOfKernel + 0x1A
     mov     ax, [es:di]
-    mov     [Loader_DIR_FstClus], ax    ;获取开始簇号
+    mov     [Kernel_DIR_FstClus], ax    ;获取开始簇号
+    ;=====================================
+    ;push    ax
+    ;call    DispRet
+    ;call    DispW
+    ;call    DispRet
+    ;pop     ax
+    ;====================================
 .findloader_end:
     ;ret
 ;end of FindLoader
     
-    cmp     [Loader_DIR_FstClus], word 0
-    jnz     LoadLoader
+    cmp     [Kernel_DIR_FstClus], word 0
+    jnz     LoadKernel
 
     push    ax
     push    NoKernelMessageLen    
@@ -196,8 +220,9 @@ FindLoader:
     pop     ax
     pop     ax
     pop     ax
+    jmp     $
 
-LoadLoader:
+LoadKernel:
     push    ax
     push    KernelFindMessageLen    
     push    ds
@@ -208,10 +233,15 @@ LoadLoader:
     pop     ax
     pop     ax
     
-    mov     ax, [Loader_DIR_FstClus]
+    mov     ax, [Kernel_DIR_FstClus]
     mov     bx, word BaseOfKernel
-.loop_LoadLoader:
+.loop_LoadKernel:
     push    ax
+
+;;;;;;;;;;;;;;;;;;;;
+;    call    DispW
+;    call    DispRet
+;;;;;;;;;;;;;;;;;;;;
 
     add     ax, SectorNoOfData
     sub     esp, 8
@@ -231,9 +261,15 @@ LoadLoader:
 
     add     bx, 20h
     cmp     ax, 0fffh
-    jnz     .loop_LoadLoader
+    jnz     .loop_LoadKernel
 
+    ;;;;;;;;;;;;;;;;;;;
+    ;push    ax
+    ;call    DispW
+    ;call    DispRet
+    ;;;;;;;;;;;;;;;;;;
 
+    ;jmp     BaseOfKernel:OffsetOfKernel
     ;push    ax         ;调试信息
     ;push    word 20h
     ;push    BaseOfKernel
@@ -244,6 +280,16 @@ LoadLoader:
     ;pop     ax
     ;pop     ax
 
+    push    ax
+    push    KernelFindMessageLen    
+    push    ds
+    push    KernelFindMessage       
+    call    DispStr
+    pop     ax
+    pop     ax
+    pop     ax
+    pop     ax
+ 
 
 GetMemInfo:
     mov     ax, cs
@@ -355,6 +401,41 @@ MemCpy:
     mov edi, [ebp + 8]  ; Destination
     mov esi, [ebp + 12] ; Source
     mov ecx, [ebp + 16] ; Counter
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;push    ax
+    ;mov     eax, ds
+    ;push    eax
+
+    ;mov     ax, SelectorLoaderRW
+    ;mov     ds, ax
+    ;call    PM_DispRet
+    ;call    PM_DispRet
+
+    ;call    PM_DispDW
+    ;call    PM_DispRet
+    ;pop     eax
+
+    ;mov     eax, es
+    ;push    eax
+    ;call    PM_DispDW
+    ;call    PM_DispRet
+    ;pop     eax
+
+    ;push    esi
+    ;call    PM_DispDW
+    ;pop     esi
+
+    ;push    edi
+    ;call    PM_DispRet
+    ;call    PM_DispDW
+    ;pop     edi
+
+    ;mov	    ax, SelectorFlatRW
+    ;mov	    ds, ax
+    ;pop     ax
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .mem_cpy_1:
     cmp ecx, 0      ; 判断计数器
     jz  .mem_cpy_2  ; 计数器为零时跳出
@@ -368,7 +449,7 @@ MemCpy:
     dec ecx         ; 计数器减一
     jmp .mem_cpy_1  ; 循环
 .mem_cpy_2:
-    ;mov eax, [ebp + 8]  ; 返回值
+    mov eax, [ebp + 8]  ; 返回值
     pop ecx 
     pop edi 
     pop esi 
@@ -393,6 +474,10 @@ SetupPaging:
 	; 为简化处理, 所有线性地址对应相等的物理地址. 并且不考虑内存空洞.
 
 	; 首先初始化页目录
+
+    mov     ax, SelectorFlatRW
+    mov     ds, ax
+
 	mov	ax, SelectorFlatRW
 	mov	es, ax
 	mov	edi, PageDirBase	; 此段首地址为 PageDirBase
@@ -434,22 +519,54 @@ SetupPaging:
 ; 将 KERNEL.BIN 的内容经过整理对齐后放到新的位置
 ; --------------------------------------------------------------------------------------------
 InitKernel:	; 遍历每一个 Program Header，根据 Program Header 中的信息来确定把什么放进内存，放到什么位置，以及放多少。
-	xor	esi, esi
-	mov	cx, word [BaseOfKernelFilePhyAddr + 2Ch]; ┓ ecx <- pELFHdr->e_phnum
+	mov	    ax, SelectorFlatRW
+	mov	    ds, ax
+    mov     es, ax
+	
+	xor	    esi, esi
+	mov	    cx, word [BaseOfKernelFilePhyAddr + 2Ch]; ┓ ecx <- pELFHdr->e_phnum
 	movzx	ecx, cx					; ┛
-	mov	esi, [BaseOfKernelFilePhyAddr + 1Ch]	; esi <- pELFHdr->e_phoff
-	add	esi, BaseOfKernelFilePhyAddr		; esi <- OffsetOfKernel + pELFHdr->e_phoff
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;push    ax
+    ;mov     ax, SelectorLoaderRW
+    ;mov     ds, ax
+    ;push    ecx
+    ;call    PM_DispRet
+    ;call    PM_DispDW
+    ;mov	    ax, SelectorFlatRW
+    ;mov	    ds, ax
+    ;pop     ecx
+    ;pop     ax
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    
+	mov	    esi, [BaseOfKernelFilePhyAddr + 1Ch]	; esi <- pELFHdr->e_phoff
+	add	    esi, BaseOfKernelFilePhyAddr		    ; esi <- OffsetOfKernel + pELFHdr->e_phoff
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;push    ax
+    ;mov     ax, SelectorLoaderRW
+    ;mov     ds, ax
+    ;push    esi
+    ;call    PM_DispRet
+    ;call    PM_DispDW
+    ;mov	    ax, SelectorFlatRW
+    ;mov	    ds, ax
+    ;pop     esi
+    ;pop     ax
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .Begin:
-	mov	eax, [esi + 0]
-	cmp	eax, 0				; PT_NULL
-	jz	.NoAction
+	mov	    eax, [esi + 0]
+	cmp	    eax, 0				; PT_NULL
+	jz	    .NoAction
 	push	dword [esi + 010h]		; size	┓
-	mov	eax, [esi + 04h]		;	┃
-	add	eax, BaseOfKernelFilePhyAddr	;	┣ ::memcpy(	(void*)(pPHdr->p_vaddr),
+	mov	    eax, [esi + 04h]		;	┃
+	add	    eax, BaseOfKernelFilePhyAddr	;	┣ ::memcpy(	(void*)(pPHdr->p_vaddr),
 	push	eax				; src	┃		uchCode + pPHdr->p_offset,
 	push	dword [esi + 08h]		; dst	┃		pPHdr->p_filesz;
 	call	MemCpy				;	┃
-	add	esp, 12				;	┛
+	add	    esp, 12				;	┛
 .NoAction:
 	add	esi, 020h			; esi += pELFHdr->e_phentsize
 	dec	ecx
@@ -466,8 +583,8 @@ LABEL_PM_START:
     mov     es, ax
     mov     fs, ax
 
-    mov     eax, SelectorStack           
-    mov     ss,  eax
+    mov     ax, SelectorStack           
+    mov     ss,  ax
     mov     esp, StackSize               
 
     ;mov     [POS], dword 10
@@ -478,11 +595,18 @@ LABEL_PM_START:
 
     call    DispMemInfo
 
+    ;mov     ax, SelectorFlatC           
+    ;mov     ds, ax
+
+    call    SetupPaging
+    call    InitKernel
+    jmp     SelectorFlatC:KernelEntryPointPhyAddr
+    jmp     $
 
 
 [SECTION .data]
 ALIGN   8
-BootMessage             db  "Loader loaded", 0AH, "Loding Kernel ...", 0AH
+BootMessage             db  "Kernel loaded", 0AH
 BootMessageLen          equ  $ - BootMessage             
 
 StackSize               equ     1024
@@ -490,7 +614,7 @@ StackSpace:             times   StackSize   db  0
 TopOfStack              equ $
 
 KernelFileName          db  "KERNEL  BIN", 0 ;LOADER.COM文件名
-Loader_DIR_FstClus      dw  0
+Kernel_DIR_FstClus      dw  0
 IsOdd                   db  0
 IsStrEqu                db  0
 NoKernelMessage         db  "No kernel", 0AH,0DH
