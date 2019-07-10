@@ -4,6 +4,8 @@
 
 extern helloword
 extern disp_str
+extern clean_screen
+extern disp_pos
 
 times 1024 db 0
 [SECTION .bss]
@@ -19,7 +21,9 @@ _start:
     ;mov     ss, ax
     ;mov     esp, StackTop
 
+    call    clean_screen
     push    helloword
+    mov     [disp_pos], dword 192 + 80 * 7;
     call    disp_str
     ;mov	gs, dx
     ;mov	ah, 08Dh				; 0000: 黑底    1111: 白字
