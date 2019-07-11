@@ -17,17 +17,13 @@ global _start
 
 _start: 
     mov     ax, cs
-    ;mov     ds, ax
-    ;mov     ss, ax
-    ;mov     esp, StackTop
 
     call    clean_screen
     push    helloword
-    mov     [disp_pos], dword 192 + 80 * 7;
+    ;mov     [disp_pos], dword 192 + 80 * 7;
     call    disp_str
 
     mov bx, 100
     mov	[gs:bx], ax	        ;屏幕第 0 行, 第 39 列。
 
     jmp $
- 

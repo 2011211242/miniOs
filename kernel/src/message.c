@@ -42,9 +42,9 @@ void disp_char(char c, char font)
 void clean_screen()
 {
     disp_pos = 0;
-    for(int i = 0; i < 20000000; i++) {
-        asm("nop");
-    } 
+    //for(int i = 0; i < 20000000; i++) {
+    //    asm("nop");
+    //} 
     for(int i = 0; i < 25; i++)
     {
         for(int j = 0; j < 80; j++)
@@ -52,7 +52,7 @@ void clean_screen()
             disp_char(' ', 0x0f);
         }
 
-        for(int i = 0; i < 2000000; i++);
+        //for(int i = 0; i < 2000000; i++);
     }
     disp_pos = 0;
 }
