@@ -25,10 +25,7 @@ _start:
     push    helloword
     mov     [disp_pos], dword 192 + 80 * 7;
     call    disp_str
-    ;mov	gs, dx
-    ;mov	ah, 08Dh				; 0000: 黑底    1111: 白字
-    ;mov al, '$'
-    
+
     mov bx, 100
     mov	[gs:bx], ax	        ;屏幕第 0 行, 第 39 列。
 

@@ -558,17 +558,17 @@ InitKernel:	; 遍历每一个 Program Header，根据 Program Header 中的信�
 
 .Begin:
 	mov	    eax, [esi + 0]
-	cmp	    eax, 0				; PT_NULL
+	cmp	    eax, 0				            ; PT_NULL
 	jz	    .NoAction
-	push	dword [esi + 010h]		; size	┓
-	mov	    eax, [esi + 04h]		;	┃
-	add	    eax, BaseOfKernelFilePhyAddr	;	┣ ::memcpy(	(void*)(pPHdr->p_vaddr),
-	push	eax				; src	┃		uchCode + pPHdr->p_offset,
-	push	dword [esi + 08h]		; dst	┃		pPHdr->p_filesz;
-	call	MemCpy				;	┃
-	add	    esp, 12				;	┛
+	push	dword [esi + 010h]		        ; size	┓
+	mov	    eax, [esi + 04h]		        ;	    ┃
+	add	    eax, BaseOfKernelFilePhyAddr	;	    ┣ ::memcpy(	(void*)(pPHdr->p_vaddr),
+	push	eax				                ; src	┃		uchCode + pPHdr->p_offset,
+	push	dword [esi + 08h]		        ; dst	┃		pPHdr->p_filesz;
+	call	MemCpy				            ;	    ┃
+	add	    esp, 12				            ;	    ┛
 .NoAction:
-	add	esi, 020h			; esi += pELFHdr->e_phentsize
+	add	esi, 020h			                ; esi += pELFHdr->e_phentsize
 	dec	ecx
 	jnz	.Begin
 	ret
@@ -601,7 +601,6 @@ LABEL_PM_START:
     call    SetupPaging
     call    InitKernel
     jmp     SelectorFlatC:KernelEntryPointPhyAddr
-    jmp     $
 
 
 [SECTION .data]
