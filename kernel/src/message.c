@@ -13,15 +13,30 @@ void disp_char(char c, char font)
     //            :"%eax", "%esi"             /*毁坏部*/
     //       );
 
-    asm("mov %0, %%al; \
-            mov %1, %%ah; \
-            mov %2, %%esi; \
-            mov %%ax, %%gs:(, %%esi, 2);"
-            :
-            :"r"(c), "r"(font), "r"(disp_pos)      /*输出部*/
-            :"%eax", "%esi"             /*毁坏部*/
-       );
+    switch (c)
+    {
+        case '\0':  
+            return;
+        case '\n':
+            disp_pos = (disp_pos / 80 + 1) * 80; 
+            break;
 
+        default:
+            asm("mov %0, %%al; \
+                    mov %1, %%ah; \
+                    mov %2, %%esi; \
+                    mov %%ax, %%gs:(, %%esi, 2);"
+                    :
+                    :"r"(c), "r"(font), "r"(disp_pos)      /*输出部*/
+                    :"%eax", "%esi"             /*毁坏部*/
+               );
+
+            disp_pos ++;
+            break;
+    }
+
+    if (disp_pos > 25 * 80)
+        disp_pos = 25 * 80;
 }
 
 void clean_screen()
@@ -35,7 +50,6 @@ void clean_screen()
         for(int j = 0; j < 80; j++)
         {
             disp_char(' ', 0x0f);
-            disp_pos ++;
         }
 
         for(int i = 0; i < 2000000; i++);
@@ -49,7 +63,6 @@ void disp_str(char * str)
     while(str[i] != '\0')
     {
         disp_char(str[i], 0x8c);
-        disp_pos += 1;
         i++;
     }
 }
