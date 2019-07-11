@@ -1,23 +1,33 @@
+;[SECTION .data]
+;extern KernelMessage             db  "I am Kernel started ...", 0AH
+;extern KernelMessageLen          equ  $-KernelMessage             
 
-;[section .bss]
-;KernelMessage             db  "Kernel started ...", 0AH,0DH
-;KernelMessageLen          equ  $-KernelMessage             
+extern helloword
+extern disp_str
+extern clean_screen
+extern disp_pos
 
+times 1024 db 0
+[SECTION .bss]
+StackSpace      resb    2 * 1024
+StackTop:       ; 栈顶
 
 [section .text]
 global _start
 
 _start: 
     mov     ax, cs
-    mov     ds, ax
+    ;mov     ds, ax
+    ;mov     ss, ax
+    ;mov     esp, StackTop
 
-    ;mov     cx, KernelMessageLen
-    ;mov     bp, word KernelMessage
-    mov     ax, 01301h
-    mov     bx, 000fh
-    mov     dx, cs
-    mov     es, dx
-    mov     dx, 000h
-    int     10h
+    call    clean_screen
+    push    helloword
+    mov     [disp_pos], dword 192 + 80 * 7;
+    call    disp_str
 
-	jmp	$		
+    mov bx, 100
+    mov	[gs:bx], ax	        ;屏幕第 0 行, 第 39 列。
+
+    jmp $
+ 

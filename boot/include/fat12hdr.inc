@@ -24,7 +24,7 @@ BS_DrvNum	DB 0		; 中断 13 的驱动器号 0 A盘 1 B盘
 BS_Reserved1	DB 0		; 未使用
 BS_BootSig	DB 29h		; 扩展引导标记 (29h)
 BS_VolID	DD 0		; 卷序列号
-BS_VolLab	DB 'OrangeS0.02'; 卷标, 必须 11 个字节
+BS_VolLab	DB 'miniOs86.01'; 卷标, 必须 11 个字节
 BS_FileSysType	DB 'FAT12   '	; 文件系统类型, 必须 8个字节  
 ;------------------------------------------------------------------------
 
@@ -39,12 +39,6 @@ SectorNoOfFAT1		equ	1	; FAT1 的第一个扇区号	= BPB_RsvdSecCnt
 DeltaSectorNo		equ	17	; DeltaSectorNo = BPB_RsvdSecCnt + (BPB_NumFATs * FATSz) - 2
 					; 文件的开始Sector号 = DirEntry中的开始Sector号 + 根目录占用Sector数目 + DeltaSectorNo
 SectorNoOfData      equ 31  ; 数据区开始的扇区号
-
-; ------------------------------------------------------------------------
-; 关于loader的常量定义
-; ------------------------------------------------------------------------
-BaseOfLoader        equ 09000h
-OffsetOfLoader      equ 0100h 
 
 BaseOfFAT           equ 08e00h
 OffsetOfFAT         equ 00h
