@@ -1,6 +1,8 @@
 KERNELDIR :=$(shell readlink $(dir $(lastword $(MAKEFILE_LIST))) -f)
 
 KERNELBINDIR=$(KERNELDIR)/bin
+KERNELSRCDIR=$(KERNELDIR)/src
+
 KERNELSRC:=$(KERNELDIR)/kernel.asm 
 
 KERNELOBJ=$(KERNELBINDIR)/kernel.o
@@ -11,8 +13,9 @@ MESSAGESRC=$(KERNELDIR)/src/message.c
 ASMBFLAGS= -f elf32 \
 		   -I $(KERNELDIR)/include/ 
 
-SRCS=$(shell find $(KERNELDIR)/src/ -name "*.c")
-OBJS=$(SRCS:%.c=%.o)
+SRCNAMES=$(shell find $(KERNELDIR)/src/ -name "*.c" -exec basename {} \; -type f)
+OBJNAMES=$(SRCNAMES:%.c=%.o)
+OBJFILES=$(OBJNAMES:%=$(KERNELBINDIR)/%)
 
 CC:=gcc
 CCFLAGS:= -fstack-protector-all \
@@ -25,28 +28,21 @@ all: path \
 path: $(KERNELBINDIR)
 
 $(KERNELBINDIR):
-	@echo $(SRCS)
-	@echo $(OBJS)
 	mkdir $@
 
-$(OBJS): %.o : %.c
-	$(CC) $(CCFLAGS) $^ -c -o $@
+$(OBJFILES):$(OBJNAMES)
 
-$(KERNEL) : $(KERNELOBJ) $(OBJS) 	
+$(OBJNAMES): %.o : $(KERNELSRCDIR)/%.c
+	$(CC) $(CCFLAGS) $< -c -o $(KERNELBINDIR)/$@
+
+$(KERNEL) : $(KERNELOBJ) $(OBJFILES) 
 	ld -s -m elf_i386 -Ttext 0x30400 $^ -o $@
 
 $(KERNELOBJ) : $(KERNELSRC)
 	nasm $(ASMBFLAGS) $^ -o $@
 
-$(MESSAGEOBJ) : $(MESSAGESRC)
-	gcc -fstack-protector-all -fno-stack-protector $^ -m32 -c -o $@
-
-#$(KERNEL) : $(KERNELSRC)
-#	nasm -I $(KERNELDIR)/include/ $^ -o $@
-
-
 kclean:
-	rm -rf $(KERNELBINDIR) $(OBJS)
+	rm -rf $(KERNELBINDIR)
 
 .PHONY : all kclean
 

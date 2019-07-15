@@ -1,3 +1,4 @@
+#include <stdarg.h>
 char helloword[] = "Hello I am kernel";
 int disp_pos = 180 + 80 * 12;
 void disp_char(char c, char font)
