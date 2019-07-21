@@ -22,18 +22,20 @@ CCFLAGS:= -fstack-protector-all \
 	-fno-stack-protector \
 	-m32
 
+INCFLAGS:= -I $(KERNELDIR)/include
+
 all: path \
-	$(KERNEL)
+	$(KERNEL) 
 
 path: $(KERNELBINDIR)
 
 $(KERNELBINDIR):
 	mkdir $@
 
-$(OBJFILES):$(OBJNAMES)
+$(OBJFILES): $(OBJNAMES)
 
 $(OBJNAMES): %.o : $(KERNELSRCDIR)/%.c
-	$(CC) $(CCFLAGS) $< -c -o $(KERNELBINDIR)/$@
+	$(CC) $(CCFLAGS) $(INCFLAGS) $< -c -o $(KERNELBINDIR)/$@
 
 $(KERNEL) : $(KERNELOBJ) $(OBJFILES) 
 	ld -s -m elf_i386 -Ttext 0x30400 $^ -o $@
@@ -44,5 +46,4 @@ $(KERNELOBJ) : $(KERNELSRC)
 kclean:
 	rm -rf $(KERNELBINDIR)
 
-.PHONY : all kclean
-
+.PHONY : all kclean $(OBJFILES)

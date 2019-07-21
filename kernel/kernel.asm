@@ -6,6 +6,8 @@ extern helloword
 extern disp_str
 extern clean_screen
 extern disp_pos
+extern start
+     
 
 times 1024 db 0
 [SECTION .bss]
@@ -16,7 +18,7 @@ StackTop:       ; 栈顶
 global _start
 
 _start: 
-    mov     ax, cs
+    call    start 
 
     call    clean_screen
     push    helloword
