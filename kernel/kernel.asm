@@ -7,6 +7,8 @@ extern disp_str
 extern clean_screen
 extern disp_pos
 extern start
+extern gdt_ptr
+;extern init
      
 
 times 1024 db 0
@@ -18,8 +20,13 @@ StackTop:       ; 栈顶
 global _start
 
 _start: 
+    ;sgdt    [gdt_ptr]
     call    start 
+    ;lgdt    [gdt_ptr]
+    ;jmp     8:init
 
+init:
+    jmp     $
     call    clean_screen
     push    helloword
     ;mov     [disp_pos], dword 192 + 80 * 7;

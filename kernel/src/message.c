@@ -1,4 +1,5 @@
 #include <stdarg.h>
+char buf[128];
 char helloword[] = "Hello I am kernel";
 int disp_pos = 180 + 80 * 12;
 void disp_char(char c, char font)
@@ -67,3 +68,35 @@ void disp_str(char * str)
         i++;
     }
 }
+
+void str_reverse(char * buf, int size)
+{
+    for(int i = 0; i < size / 2; i ++)
+    {
+        char tmp = buf[i];
+        buf[i] = buf[size - i - 1];
+        buf[size - i - 1] = tmp;
+    }
+}
+
+void atoi(int a, char * buf)
+{
+    int i = 0;
+    while(a > 0)
+    {
+        buf[i] = a % 10 + '0';
+        i ++;
+        a /= 10;
+    }
+    str_reverse(buf, i);
+    buf[i] = '\0';
+}
+
+void disp_int(int a)
+{
+    atoi(a, buf);
+    //buf[0] = '4';
+    //buf[1] = '\0';
+    disp_str(buf);
+}
+
