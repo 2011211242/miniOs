@@ -20,14 +20,14 @@ StackTop:       ; 栈顶
 global _start
 
 _start: 
-    ;sgdt    [gdt_ptr]
-    call    start 
-    ;lgdt    [gdt_ptr]
-    ;jmp     8:init
+    sgdt    [gdt_ptr]
+    ;call    start 
+    lgdt    [gdt_ptr]
+    jmp     8:init
 
 init:
-    jmp     $
-    call    clean_screen
+    call   clean_screen
+    ;jmp     $
     push    helloword
     ;mov     [disp_pos], dword 192 + 80 * 7;
     call    disp_str

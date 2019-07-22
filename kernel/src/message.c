@@ -64,7 +64,7 @@ void disp_str(char * str)
     int i = 0;
     while(str[i] != '\0')
     {
-        disp_char(str[i], 0x8c);
+        disp_char(str[i], 0x0f);
         i++;
     }
 }

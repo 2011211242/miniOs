@@ -5,9 +5,12 @@ typedef struct s_descriptor     /* 共 8 个字节 */
 {
     short limit_low;      /* Limit */
     short base_low;       /* Base */
+
     char base_mid;       /* Base */
-    short limit_high_attr;   /* G(1) D(1) 0(1) AVL(1) LimitHigh(4) */
-    char base_high;      /* Base */
+
+    char attr1;          /* P(1) DPL(2) DT(1) TYPE(4) */
+    char limit_high_attr2;   /* G(1) D(1) 0(1) AVL(1) LimitHigh(4) */
+    char base_high;     /* Base */
 } GDT_DESCRIPTOR;
 
 /* 门描述符 */
