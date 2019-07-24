@@ -1,4 +1,2 @@
 # miniOs
-a mini x86 system 
-
-test
+develop a mini x86 system 
