@@ -8,6 +8,7 @@ extern clean_screen
 extern disp_pos
 extern start
 extern gdt_ptr
+extern gdt_init
 ;extern init
      
 
@@ -20,19 +21,14 @@ StackTop:       ; 栈顶
 global _start
 
 _start: 
-    sgdt    [gdt_ptr]
-    ;call    start 
-    lgdt    [gdt_ptr]
+    call    gdt_init
     jmp     8:init
 
 init:
-    call   clean_screen
-    ;jmp     $
+    call    clean_screen
+    mov     ax, 16
+    mov     ss, ax
+    mov     esp, StackTop
     push    helloword
-    ;mov     [disp_pos], dword 192 + 80 * 7;
     call    disp_str
-
-    mov bx, 100
-    mov	[gs:bx], ax	        ;屏幕第 0 行, 第 39 列。
-
-    jmp $
+    hlt 
