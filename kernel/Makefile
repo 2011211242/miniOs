@@ -13,9 +13,8 @@ MESSAGESRC=$(KERNELDIR)/src/message.c
 ASMBFLAGS= -f elf32 \
 		   -I $(KERNELDIR)/include/ 
 
-SRCNAMES=$(shell find $(KERNELDIR)/src/ -name "*.c" -exec basename {} \; -type f)
-OBJNAMES=$(SRCNAMES:%.c=%.o)
-OBJFILES=$(OBJNAMES:%=$(KERNELBINDIR)/%)
+SRCFILES=$(shell find $(KERNELDIR)/src/ -name "*.c" -type f)
+OBJFILES=$(SRCFILES:%.c=%.o)
 
 CC:=gcc
 CCFLAGS:= -fstack-protector-all \
@@ -32,10 +31,8 @@ path: $(KERNELBINDIR)
 $(KERNELBINDIR):
 	mkdir $@
 
-$(OBJFILES): $(OBJNAMES)
-
-$(OBJNAMES): %.o : $(KERNELSRCDIR)/%.c
-	$(CC) $(CCFLAGS) $(INCFLAGS) $< -c -o $(KERNELBINDIR)/$@
+$(OBJFILES): %.o : %.c
+	$(CC) $(CCFLAGS) $(INCFLAGS) $< -c -o $@
 
 $(KERNEL) : $(KERNELOBJ) $(OBJFILES) 
 	ld -s -m elf_i386 -Ttext 0x30400 $^ -o $@
@@ -45,5 +42,6 @@ $(KERNELOBJ) : $(KERNELSRC)
 
 kclean:
 	rm -rf $(KERNELBINDIR)
+	rm -rf $(OBJFILES)
 
-.PHONY : all kclean $(OBJFILES)
+.PHONY : all kclean 
