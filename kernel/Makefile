@@ -1,14 +1,9 @@
 KERNELDIR :=$(shell readlink $(dir $(lastword $(MAKEFILE_LIST))) -f)
 
 KERNELBINDIR=$(KERNELDIR)/bin
-KERNELSRCDIR=$(KERNELDIR)/src
-
 KERNELSRC:=$(KERNELDIR)/kernel.asm 
-
 KERNELOBJ=$(KERNELBINDIR)/kernel.o
 KERNEL=$(KERNELBINDIR)/kernel.bin
-MESSAGEOBJ=$(KERNELBINDIR)/message.o
-MESSAGESRC=$(KERNELDIR)/src/message.c
 
 ASMBFLAGS= -f elf32 \
 		   -I $(KERNELDIR)/include/ 
