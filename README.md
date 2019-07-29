@@ -9,3 +9,6 @@ https://blog.csdn.net/kuang_tian_you/article/details/81412364
 	1、 git clone 本项目
   
 	2、 在目录下执行 bochs 
+
+    ![][image/bochs_step1.png]
+
