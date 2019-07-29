@@ -10,5 +10,6 @@ https://blog.csdn.net/kuang_tian_you/article/details/81412364
   
 	2、 在目录下执行 bochs 
 
-![启动bochs](./image/bochs_step1.png)
+   ![启动bochs](./image/bochs_step1.png)
+    
 
