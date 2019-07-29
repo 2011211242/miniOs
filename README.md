@@ -18,6 +18,7 @@ https://blog.csdn.net/kuang_tian_you/article/details/81412364
     U盘启动盘的制作
     注意：执行下面的命令会格式化U盘，请确认U盘中信息已备份
    ![U盘制作](./image/boot_disk_make.png)
+
     1、在miniOs目录下执行
     sudo dd if=boot/boot.bin of=/dev/sdb bs=512 count=1 conv=notrunc
 
@@ -27,5 +28,5 @@ https://blog.csdn.net/kuang_tian_you/article/details/81412364
 
     3、修改bios启动顺序，将u盘启动设置优先级最高
     执行结果如下：
-   ![U盘制作](./image/boot_from_disk.png)
+   ![U盘制作](./image/boot_from_disk.jpg)
 
