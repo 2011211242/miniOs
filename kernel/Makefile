@@ -26,7 +26,7 @@ path: $(KERNELBINDIR)
 $(KERNELBINDIR):
 	mkdir $@
 
-$(OBJFILES): %.o : %.c
+$(OBJFILES): %.o : %.c 
 	$(CC) $(CCFLAGS) $(INCFLAGS) $< -c -o $@
 
 $(KERNEL) : $(KERNELOBJ) $(OBJFILES) 

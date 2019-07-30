@@ -30,3 +30,24 @@ void gdt_init() {
     asm ("lgdt (,%0,1)"::"r"(gdt_ptr):);
 }
 
+void out_type(short port, char value)
+{
+    asm("mov %0, %%dx; \
+            mov %1, %%al; \
+            out %%al, %%dx;\
+            nop; nop;"
+            :
+            :"r"(port), "r"(value)
+            :"%al", "%dx"
+    );
+}
+
+void in_byte(short port)
+{
+
+}
+
+void init_8295A()
+{
+
+}
