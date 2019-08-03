@@ -25,7 +25,7 @@ typedef struct s_gate
 				   发生时，要复制的双字参数的数量。*/
 	char	attr;		/* P(1) DPL(2) DT(1) TYPE(4) */
 	short	offset_high;	/* Offset High */
-}GATE;
+} GATE;
 
 
 /* GDT */

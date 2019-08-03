@@ -2,8 +2,73 @@
 #include <const.h>
 #include <message.h>
 
+char c_pos; 
+void clock();
+void disp_char_int(int disp_pos, char c, char font)
+{
+    //asm("mov %1, %%al; \
+    //            mov $0xef, %%ah; \
+    //            mov %2, %%esi; \
+    //            mov %%ax, %%gs:(, %%esi, 2); \
+    //            add $0x01, %%esi; \
+    //            mov %%esi, %0;"
+    //            :"=r"(disp_pos)
+    //            :"r"(c), "r"(disp_pos)      /*输出部*/
+    //            :"%eax", "%esi"             /*毁坏部*/
+    //       );
+
+    switch (c)
+    {
+        case '\0':  
+            return;
+        case '\n':
+            disp_pos = (disp_pos / 80 + 1) * 80; 
+            break;
+
+        default:
+            asm("mov %0, %%al; \
+                    mov %1, %%ah; \
+                    mov %2, %%esi; \
+                    mov %%ax, %%gs:(, %%esi, 2);"
+                    :
+                    :"r"(c), "r"(font), "r"(disp_pos)      /*输出部*/
+                    :"%eax", "%esi"             /*毁坏部*/
+               );
+
+            disp_pos ++;
+            break;
+    }
+
+    if (disp_pos > 25 * 80)
+        disp_pos = 25 * 80;
+}
+
+/*
+void clock()
+{
+    int disp_pos = 100;
+    disp_char_int(disp_pos, c, 0x0f);
+    c = c + 1;
+    //if (c >= 'z') c = 'a';
+
+    for(int i = 0; i < 1000; i++)
+    {
+        asm("nop":::);
+    }
+    disp_pos += 100;
+    disp_char_int(disp_pos, c, 0x0f);
+    //while(1);
+    //if (c == 'b') asm("jmp $":::);
+    asm("hlt":::);
+
+}
+*/
+
 static  char    gdt_ptr[6];
 static  GDT_DESCRIPTOR gdt[GDT_SIZE];
+
+static  char    idt_ptr[6];
+static  GATE    idt[IDT_SIZE];
 
 void GDT_INIT(GDT_DESCRIPTOR * GDT, int Base, int Limit, int Attr) {
     GDT -> limit_low    =   Limit & 0xFFFF;
@@ -28,6 +93,29 @@ void gdt_init() {
     *p_gdt_base  = (int)(gdt);
 
     asm ("lgdt (,%0,1)"::"r"(gdt_ptr):);
+}
+
+typedef void (*int_handler) ();
+
+static void init_idt_desc(unsigned char idx, unsigned char desc_type, int_handler handler, unsigned char privilege)
+{
+    GATE * p_gate           = &idt[idx];
+    unsigned int base       = (unsigned int) handler;
+    p_gate -> offset_low    = base & 0xFFFF;
+    p_gate -> selector      = SELECTOR_KERNEL_CS;
+    p_gate -> dcount        = 0;
+    p_gate -> attr          = desc_type | (privilege << 5);
+    p_gate -> offset_high   = (base >> 16) & 0xFFFF;
+}
+
+void ldt_init() {
+    init_idt_desc(0x20, DA_386IGate, clock, PRIVILEGE_KRNL);
+
+    short* p_idt_limit = (short*)(&idt_ptr[0]);
+    int* p_idt_base  = (int*)(&idt_ptr[2]);
+    *p_idt_limit = IDT_SIZE * sizeof(GATE) - 1;
+    *p_idt_base  = (int)(idt);
+    asm ("lidt (,%0,1)"::"r"(idt_ptr):);
 }
 
 static void out_byte(short port, char value)
@@ -84,10 +172,13 @@ void init_8295A()
     out_byte(INT_S_CTLMASK, 0x1);
 
     /* Master 8259, OCW1.  */
-    out_byte(INT_M_CTLMASK, 0xFD);
+    out_byte(INT_M_CTLMASK, 0xFE);  //仅打开时钟中断
 
     /* Slave  8259, OCW1.  */
     out_byte(INT_S_CTLMASK, 0xFF);
 }
 
-
+void cs_start(){
+    init_8295A();
+    ldt_init();
+}
