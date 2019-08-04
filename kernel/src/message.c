@@ -38,23 +38,18 @@ void disp_char(char c, char font)
     }
 
     if (disp_pos > 25 * 80)
-        disp_pos = 25 * 80;
+        disp_pos = 0;
 }
 
 void clean_screen()
 {
     disp_pos = 0;
-    //for(int i = 0; i < 20000000; i++) {
-    //    asm("nop");
-    //} 
     for(int i = 0; i < 25; i++)
     {
         for(int j = 0; j < 80; j++)
         {
             disp_char(' ', 0x0f);
         }
-
-        //for(int i = 0; i < 2000000; i++);
     }
     disp_pos = 0;
 }
@@ -95,9 +90,6 @@ void atoi(int a, char * buf)
 void disp_int(int a)
 {
     atoi(a, buf);
-    //buf[0] = '4';
-    //buf[1] = '\0';
     disp_str(buf);
 }
-
 

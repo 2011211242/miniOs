@@ -11,6 +11,7 @@ extern gdt_ptr
 extern gdt_init
 extern cs_start
 extern disp_char
+extern clock_handle
 
 SELECTOR_KERNEL_CS  equ 0x08
 
@@ -43,37 +44,13 @@ HLT:
     jmp HLT
 
 clock:
-    push    0Ah
-    push    'B'
-    call    disp_char
-    add     esp, 8
+    ;push    0Ah
+    ;push    'B'
+    ;call    disp_char
+    ;add     esp, 8
+    call clock_handle
 
     mov     al, 20h
     out     20h, al
     iretd
-
-;static char c = 'b';
-;void clock()
-;{
-;    int disp_pos = 100;
-;    disp_char_int(disp_pos, c, 0x0f);
-;    c = c + 1;
-;    //if (c >= 'z') c = 'a';
-
-;    for(int i = 0; i < 1000; i++)
-;    {
-;        asm("nop":::);
-;    }
-;    disp_pos += 100;
-;    disp_char_int(disp_pos, c, 0x0f);
-;  //while(1);
-;   //if (c == 'b') asm("jmp $":::);
-;    asm("hlt":::);
-;}
-;push    0x0f
-;push         
-;disp_pos = 100;
-;call disp_char_int(c, 0x0f);
-;hlt
-;retf
 
