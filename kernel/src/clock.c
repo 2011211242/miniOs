@@ -1,12 +1,15 @@
 extern int disp_pos;
 void disp_char(char, char font);
 
+#define MAX_TIME_COUNT 25
+
 void clock_handle(){
-    static int time_count = 0;
+    static int time_count = MAX_TIME_COUNT;
     static char ch = 'A';
     disp_pos = 80;
 
-    if (time_count > 5000)
+    
+    if (time_count >= MAX_TIME_COUNT)
     {
         disp_char(ch, 0x0A);
         time_count = 0;

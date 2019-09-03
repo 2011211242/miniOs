@@ -178,7 +178,16 @@ void init_8295A()
     out_byte(INT_S_CTLMASK, 0xFF);
 }
 
+void init_timer()
+{
+    out_byte(INT_T_CTL, 0x36);
+
+    out_byte(INT_T_DEVIDER, INT_T_FREQ_DEVIDR & 0xff);
+    out_byte(INT_T_DEVIDER, (INT_T_FREQ_DEVIDR >> 8) & 0xff);
+}
+
 void cs_start(){
+    init_timer();
     init_8295A();
     ldt_init();
 }

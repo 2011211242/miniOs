@@ -11,7 +11,7 @@ typedef struct s_descriptor     /* 共 8 个字节 */
     char attr1;          /* P(1) DPL(2) DT(1) TYPE(4) */
     char limit_high_attr2;   /* G(1) D(1) 0(1) AVL(1) LimitHigh(4) */
     char base_high;     /* Base */
-} GDT_DESCRIPTOR;
+} __attribute__ ((packed)) GDT_DESCRIPTOR;
 
 /* 门描述符 */
 typedef struct s_gate
@@ -25,7 +25,7 @@ typedef struct s_gate
 				   发生时，要复制的双字参数的数量。*/
 	char	attr;		/* P(1) DPL(2) DT(1) TYPE(4) */
 	short	offset_high;	/* Offset High */
-} GATE;
+} __attribute__ ((packed)) GATE;
 
 
 /* GDT */
@@ -94,5 +94,10 @@ typedef struct s_gate
 #define INT_M_CTLMASK 0x21 /* setting bits in this port disables ints <Master> */
 #define INT_S_CTL     0xA0 /* I/O port for second interrupt controller<Slave>  */
 #define INT_S_CTLMASK 0xA1 /* setting bits in this port disables ints <Slave>  */
+
+/* 8253 controller port and frequency divider para */
+#define INT_T_CTL       0x43 /* port for timer work mode controller */
+#define INT_T_DEVIDER   0x40 /* port for timer divider */
+#define INT_T_FREQ_DEVIDR      0xFFFF /* value for timer frequency devider */
 
 #endif
