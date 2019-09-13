@@ -21,6 +21,14 @@ SELECTOR_KERNEL_CS  equ 0x08
 StackSpace      resb    2 * 1024
 StackTop:       ; 栈顶
 
+StackSpaceOfA   resb    1 * 1024
+StackTopOfA:       ;任务A的栈顶
+
+StackSpaceOfB   resb    1 * 1024
+StackTopOfB:       ; 任务B的栈顶
+
+
+
 [section .text]
 global _start
 global clock
@@ -90,14 +98,10 @@ loop_wait_1:
 
     jmp task_a
 
-StackSpaceOfA   resb    1 * 1024
-StackTopOfA:       ;任务A的栈顶
-
 task_b:
     mov     eax, 'B'
     mov     ebx, 0x0A
     int     0x80
     jmp     task_b
 
-StackSpaceOfB   resb    1 * 1024
-StackTopOfB:       ; 任务B的栈顶
+
