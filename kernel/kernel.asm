@@ -42,9 +42,11 @@ init:
     call    cs_start
     sti
 
-    mov     eax, 'B'
-    mov     ebx, 0x0A
-    int     0x80
+    jmp     task_a
+
+    ;mov     eax, 'B'
+    ;mov     ebx, 0x0A
+    ;int     0x80
 
 HLT:
     hlt 
@@ -70,14 +72,32 @@ system_call:
 
 task_a:
     mov     eax, 'A'
-    mov     ebx, 0x0A
+    mov     ebx, 0x0f
     int     0x80
+ 
+
+    mov     ecx, 0xF
+loop_wait:
+    push    ecx
+
+    mov     ecx, 0xFFFFFFFF
+loop_wait_1:
+    nop
+    loop    loop_wait_1
+
+    pop     ecx
+    loop    loop_wait
+
     jmp task_a
 
+StackSpaceOfA   resb    1 * 1024
+StackTopOfA:       ;任务A的栈顶
 
 task_b:
     mov     eax, 'B'
     mov     ebx, 0x0A
     int     0x80
     jmp     task_b
-    
+
+StackSpaceOfB   resb    1 * 1024
+StackTopOfB:       ; 任务B的栈顶
