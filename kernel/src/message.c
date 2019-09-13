@@ -1,6 +1,7 @@
 #include <stdarg.h>
 char buf[128];
-char helloword[] = "Hello I am kernel";
+char helloword[] = "Hello I am kernel\n";
+char system_call_message[] = "system call test\n";
 int disp_pos = 180 + 80 * 12;
 void disp_char(char c, char font)
 {

@@ -4,6 +4,7 @@
 
 char c_pos; 
 void clock();
+void system_call();
 void disp_char_int(int disp_pos, char c, char font)
 {
     //asm("mov %1, %%al; \
@@ -110,6 +111,7 @@ static void init_idt_desc(unsigned char idx, unsigned char desc_type, int_handle
 
 void ldt_init() {
     init_idt_desc(0x20, DA_386IGate, clock, PRIVILEGE_KRNL);
+    init_idt_desc(0x80, DA_386IGate, system_call, PRIVILEGE_KRNL);
 
     short* p_idt_limit = (short*)(&idt_ptr[0]);
     int* p_idt_base  = (int*)(&idt_ptr[2]);
@@ -178,16 +180,15 @@ void init_8295A()
     out_byte(INT_S_CTLMASK, 0xFF);
 }
 
-void init_timer()
+void init_8253A()
 {
     out_byte(INT_T_CTL, 0x36);
-
     out_byte(INT_T_DEVIDER, INT_T_FREQ_DEVIDR & 0xff);
     out_byte(INT_T_DEVIDER, (INT_T_FREQ_DEVIDR >> 8) & 0xff);
 }
 
 void cs_start(){
-    init_timer();
+    init_8253A();
     init_8295A();
     ldt_init();
 }

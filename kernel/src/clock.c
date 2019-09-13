@@ -6,7 +6,7 @@ void disp_char(char, char font);
 void clock_handle(){
     static int time_count = MAX_TIME_COUNT;
     static char ch = 'A';
-    disp_pos = 80;
+    disp_pos = 120;
 
     
     if (time_count >= MAX_TIME_COUNT)

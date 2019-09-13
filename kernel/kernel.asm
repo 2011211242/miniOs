@@ -2,6 +2,7 @@
 ;extern KernelMessage             db  "I am Kernel started ...", 0AH
 ;extern KernelMessageLen          equ  $-KernelMessage             
 
+extern system_call_message
 extern helloword
 extern disp_str
 extern clean_screen
@@ -23,6 +24,7 @@ StackTop:       ; 栈顶
 [section .text]
 global _start
 global clock
+global system_call
 
 _start: 
     call    gdt_init
@@ -35,9 +37,14 @@ init:
     mov     esp, StackTop
     push    helloword
     call    disp_str
+    add     esp, 4
     cli
     call    cs_start
     sti
+
+    mov     eax, 'B'
+    mov     ebx, 0x0A
+    int     0x80
 
 HLT:
     hlt 
@@ -49,8 +56,28 @@ clock:
     ;call    disp_char
     ;add     esp, 8
     call clock_handle
-
     mov     al, 20h
     out     20h, al
     iretd
 
+system_call:
+    push    ebx
+    push    eax
+    call    disp_char
+    add     esp, 8
+    iretd
+
+
+task_a:
+    mov     eax, 'A'
+    mov     ebx, 0x0A
+    int     0x80
+    jmp task_a
+
+
+task_b:
+    mov     eax, 'B'
+    mov     ebx, 0x0A
+    int     0x80
+    jmp     task_b
+    
