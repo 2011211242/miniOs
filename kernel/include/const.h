@@ -3,6 +3,7 @@
 
 #define     GDT_SIZE    128
 #define     IDT_SIZE    256
+#define     LDT_SIZE    4
 
 /* 权限 */
 #define PRIVILEGE_KRNL  0

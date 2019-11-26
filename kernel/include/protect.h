@@ -1,5 +1,10 @@
 #ifndef _PROTECT_H_
 #define _PROTECT_H_
+#include <const.h>
+
+#define u32 unsigned int
+#define u16 unsigned short
+
 
 typedef struct s_descriptor     /* 共 8 个字节 */
 {
@@ -26,6 +31,68 @@ typedef struct s_gate
 	char	attr;		/* P(1) DPL(2) DT(1) TYPE(4) */
 	short	offset_high;	/* Offset High */
 } __attribute__ ((packed)) GATE;
+
+typedef struct s_tss {
+    u32 backlink;
+    u32 esp0;   /* stack pointer to use during interrupt */
+    u32 ss0;    /*   "   segment  "  "    "        "     */
+    u32 esp1;
+    u32 ss1;
+    u32 esp2;
+    u32 ss2;
+    u32 cr3;
+    u32 eip;
+    u32 flags;
+    u32 eax;
+    u32 ecx;
+    u32 edx;
+    u32 ebx;
+    u32 esp;
+    u32 ebp;
+    u32 esi;
+    u32 edi;
+    u32 es;
+    u32 cs;
+    u32 ss;
+    u32 ds;
+    u32 fs;
+    u32 gs;
+    u32 ldt;
+    u16 trap;
+    u16 iobase; /* I/O位图基址大于或等于TSS段界限，就表示没有I/O许可位图 */
+} __attribute__ ((packed)) TSS;
+
+typedef struct s_stackframe {
+    u32 gs;     /* \                                    */
+    u32 fs;     /* |                                    */
+    u32 es;     /* |                                    */
+    u32 ds;     /* |                                    */
+    u32 edi;        /* |                                    */
+    u32 esi;        /* | pushed by save()                   */
+    u32 ebp;        /* |                                    */
+    u32 kernel_esp; /* <- 'popad' will ignore it            */
+    u32 ebx;        /* |                                    */
+    u32 edx;        /* |                                    */
+    u32 ecx;        /* |                                    */
+    u32 eax;        /* /                                    */
+    u32 retaddr;    /* return addr for kernel.asm::save()   */
+    u32 eip;        /* \                                    */
+    u32 cs;     /* |                                    */
+    u32 eflags;     /* | pushed by CPU during interrupt     */
+    u32 esp;        /* |                                    */
+    u32 ss;     /* /                                    */
+}STACK_FRAME;
+
+
+typedef struct s_proc {
+    STACK_FRAME regs;          /* process registers saved in stack frame */
+
+    u16 ldt_sel;               /* gdt selector giving ldt base and limit */
+    GDT_DESCRIPTOR ldts[LDT_SIZE]; /* local descriptors for code and data */
+    u32 pid;                   /* process id passed in from MM */
+    char p_name[16];           /* name of the process */
+    TSS tss;
+} PROCESS;
 
 
 /* GDT */

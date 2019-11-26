@@ -34,7 +34,7 @@ global _start
 global clock
 global system_call
 
-_start: 
+_start:
     call    gdt_init
     jmp     SELECTOR_KERNEL_CS:init
 
@@ -57,7 +57,7 @@ init:
     ;int     0x80
 
 HLT:
-    hlt 
+    hlt
     jmp HLT
 
 clock:
@@ -82,7 +82,6 @@ task_a:
     mov     eax, 'A'
     mov     ebx, 0x0f
     int     0x80
- 
 
     mov     ecx, 0xF
 loop_wait:
