@@ -70,6 +70,7 @@ static  GDT_DESCRIPTOR gdt[GDT_SIZE];
 
 static  char    idt_ptr[6];
 static  GATE    idt[IDT_SIZE];
+static  PROCESS process[TSK_NUM];
 
 void GDT_INIT(GDT_DESCRIPTOR * GDT, int Base, int Limit, int Attr) {
     GDT -> limit_low    =   Limit & 0xFFFF;
@@ -80,12 +81,22 @@ void GDT_INIT(GDT_DESCRIPTOR * GDT, int Base, int Limit, int Attr) {
     GDT -> base_high       =   (Base >> 24) & 0x0FF;
 }
 
+#define TSS0_SEL    0x20
+#define LDT0_SEL    0x28
+#define TSS1_SEL    0x30
+#define LDT1_SEL    0x38
 
 void gdt_init() {
-    GDT_INIT(&gdt[0], 0x0, 0x0, 0x0);
-    GDT_INIT(&gdt[1], 0x0, 0xfffff, DA_CR|DA_32|DA_LIMIT_4K);
-    GDT_INIT(&gdt[2], 0x0, 0xfffff, DA_DRW|DA_32|DA_LIMIT_4K);
-    GDT_INIT(&gdt[3], 0x0B8000, 0xffff, DA_DRW|DA_DPL3);
+    GDT_INIT(&gdt[0], 0x0, 0x0, 0x0); //0x00
+    GDT_INIT(&gdt[1], 0x0, 0xfffff, DA_CR|DA_32|DA_LIMIT_4K); //0x08
+    GDT_INIT(&gdt[2], 0x0, 0xfffff, DA_DRW|DA_32|DA_LIMIT_4K); //0x10
+    GDT_INIT(&gdt[3], 0x0B8000, 0xffff, DA_DRW|DA_DPL3); //0x18
+
+    GDT_INIT(&gdt[4], (int)&process[0].tss, sizeof(process[0].tss), DA_386TSS); //TSS0 0x20
+    GDT_INIT(&gdt[5], (int)process[0].ldts, sizeof(process[0].ldts), DA_LDT);   //LDT0 0x28
+
+    GDT_INIT(&gdt[6], (int)&process[1].tss, sizeof(process[1].tss), DA_386TSS); //TSS1 0x30
+    GDT_INIT(&gdt[7], (int)process[1].ldts, sizeof(process[1].ldts), DA_LDT);   //LDT1 0x38
 
     /* gdt_ptr[6] 共 6 个字节：0~15:Limit  16~47:Base。用作 sgdt/lgdt 的参数。*/
     short* p_gdt_limit = (short*)(&gdt_ptr[0]);
@@ -94,6 +105,44 @@ void gdt_init() {
     *p_gdt_base  = (int)(gdt);
 
     asm ("lgdt (,%0,1)"::"r"(gdt_ptr):);
+}
+
+void task0() {
+}
+
+void task1() {
+}
+
+void tss_init () {
+    //memset(&process[0].tss, sizeof(process[0].tss), 0);
+    //memset(&process[1].tss, sizeof(process[0].tss), 0);
+
+    process[0].tss.ss0 = 16;
+    process[1].tss.ss0 = 16;
+
+    process[0].tss.esp0 = (u32)process[0].stack_kernel + sizeof(process[0].stack_kernel);
+    process[1].tss.esp0 = (u32)process[1].stack_kernel + sizeof(process[1].stack_kernel);
+
+    process[0].tss.eip = (int)task0;
+    process[0].tss.es = 0x17;
+    process[0].tss.cs = 0x07;
+    process[0].tss.ss = 0x17;
+    process[0].tss.ds = 0x17;
+    process[0].tss.fs = 0x17;
+    process[0].tss.gs = 0x17;
+    process[0].tss.ldt = LDT0_SEL;
+    process[0].tss.iobase = sizeof(TSS);
+
+
+    process[1].tss.eip = (int)task1;
+    process[1].tss.es = 0x17;
+    process[1].tss.cs = 0x07;
+    process[1].tss.ss = 0x17;
+    process[1].tss.ds = 0x17;
+    process[1].tss.fs = 0x17;
+    process[1].tss.gs = 0x17;
+    process[1].tss.ldt = LDT1_SEL;
+    process[1].tss.iobase = sizeof(TSS);
 }
 
 typedef void (*int_handler) ();
@@ -188,6 +237,7 @@ void init_8253A()
 }
 
 void cs_start(){
+    tss_init();
     init_8253A();
     init_8295A();
     ldt_init();

@@ -14,6 +14,8 @@ extern cs_start
 extern disp_char
 extern clock_handle
 
+
+
 SELECTOR_KERNEL_CS  equ 0x08
 
 ;times 1024 db 0
@@ -33,6 +35,7 @@ StackTopOfB:       ; 任务B的栈顶
 global _start
 global clock
 global system_call
+global StackTop
 
 _start:
     call    gdt_init
