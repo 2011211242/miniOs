@@ -16,6 +16,7 @@ extern clock_handle
 
 
 
+
 SELECTOR_KERNEL_CS  equ 0x08
 
 ;times 1024 db 0
@@ -36,6 +37,7 @@ global _start
 global clock
 global system_call
 global StackTop
+global task_a
 
 _start:
     call    gdt_init
@@ -53,7 +55,14 @@ init:
     call    cs_start
     sti
 
-    jmp     task_a
+    mov     ax, 0x20
+    ltr     ax
+
+    push    
+
+    
+
+    ;jmp     task_a
 
     ;mov     eax, 'B'
     ;mov     ebx, 0x0A

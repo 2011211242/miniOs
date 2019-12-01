@@ -5,6 +5,7 @@
 char c_pos; 
 void clock();
 void system_call();
+void task_a();
 void disp_char_int(int disp_pos, char c, char font)
 {
     //asm("mov %1, %%al; \
@@ -98,6 +99,8 @@ void gdt_init() {
     GDT_INIT(&gdt[6], (int)&process[1].tss, sizeof(process[1].tss), DA_386TSS); //TSS1 0x30
     GDT_INIT(&gdt[7], (int)process[1].ldts, sizeof(process[1].ldts), DA_LDT);   //LDT1 0x38
 
+    GDT_INT(&)
+
     /* gdt_ptr[6] 共 6 个字节：0~15:Limit  16~47:Base。用作 sgdt/lgdt 的参数。*/
     short* p_gdt_limit = (short*)(&gdt_ptr[0]);
     int* p_gdt_base  = (int*)(&gdt_ptr[2]);
@@ -123,7 +126,7 @@ void tss_init () {
     process[0].tss.esp0 = (u32)process[0].stack_kernel + sizeof(process[0].stack_kernel);
     process[1].tss.esp0 = (u32)process[1].stack_kernel + sizeof(process[1].stack_kernel);
 
-    process[0].tss.eip = (int)task0;
+    process[0].tss.eip = (int)task_a;
     process[0].tss.es = 0x17;
     process[0].tss.cs = 0x07;
     process[0].tss.ss = 0x17;
@@ -158,9 +161,17 @@ static void init_idt_desc(unsigned char idx, unsigned char desc_type, int_handle
     p_gate -> offset_high   = (base >> 16) & 0xFFFF;
 }
 
-void ldt_init() {
+void idt_init() {
     init_idt_desc(0x20, DA_386IGate, clock, PRIVILEGE_KRNL);
     init_idt_desc(0x80, DA_386IGate, system_call, PRIVILEGE_KRNL);
+
+
+    //GDT_INIT(&gdt[5], (int)process[0].ldts, sizeof(process[0].ldts), DA_LDT);   //LDT0 0x28
+
+    //GDT_INIT(&gdt[6], (int)&process[1].tss, sizeof(process[1].tss), DA_386TSS); //TSS1 0x30
+    //GDT_INIT(&gdt[7], (int)process[1].ldts, sizeof(process[1].ldts), DA_LDT);   //LDT1 0x38
+
+
 
     short* p_idt_limit = (short*)(&idt_ptr[0]);
     int* p_idt_base  = (int*)(&idt_ptr[2]);
