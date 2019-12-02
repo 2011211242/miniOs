@@ -93,13 +93,12 @@ void gdt_init() {
     GDT_INIT(&gdt[2], 0x0, 0xfffff, DA_DRW|DA_32|DA_LIMIT_4K); //0x10
     GDT_INIT(&gdt[3], 0x0B8000, 0xffff, DA_DRW|DA_DPL3); //0x18
 
-    GDT_INIT(&gdt[4], (int)&process[0].tss, sizeof(process[0].tss), DA_386TSS); //TSS0 0x20
-    GDT_INIT(&gdt[5], (int)process[0].ldts, sizeof(process[0].ldts), DA_LDT);   //LDT0 0x28
+    //GDT_INIT(&gdt[4], (int)&process[0].tss, sizeof(process[0].tss), DA_386TSS); //TSS0 0x20
+    //GDT_INIT(&gdt[5], (int)process[0].ldts, sizeof(process[0].ldts), DA_LDT);   //LDT0 0x28
 
-    GDT_INIT(&gdt[6], (int)&process[1].tss, sizeof(process[1].tss), DA_386TSS); //TSS1 0x30
-    GDT_INIT(&gdt[7], (int)process[1].ldts, sizeof(process[1].ldts), DA_LDT);   //LDT1 0x38
-
-    GDT_INT(&)
+    //GDT_INIT(&gdt[6], (int)&process[1].tss, sizeof(process[1].tss), DA_386TSS); //TSS1 0x30
+    //GDT_INIT(&gdt[7], (int)process[1].ldts, sizeof(process[1].ldts), DA_LDT);   //LDT1 0x38
+    //GDT_INT(&)
 
     /* gdt_ptr[6] 共 6 个字节：0~15:Limit  16~47:Base。用作 sgdt/lgdt 的参数。*/
     short* p_gdt_limit = (short*)(&gdt_ptr[0]);
@@ -248,8 +247,8 @@ void init_8253A()
 }
 
 void cs_start(){
-    tss_init();
+    //tss_init();
     init_8253A();
     init_8295A();
-    ldt_init();
+    idt_init();
 }

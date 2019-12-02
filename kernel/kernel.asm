@@ -24,11 +24,11 @@ SELECTOR_KERNEL_CS  equ 0x08
 StackSpace      resb    2 * 1024
 StackTop:       ; 栈顶
 
-StackSpaceOfA   resb    1 * 1024
-StackTopOfA:       ;任务A的栈顶
+;StackSpaceOfA   resb    1 * 1024
+;StackTopOfA:       ;任务A的栈顶
 
-StackSpaceOfB   resb    1 * 1024
-StackTopOfB:       ; 任务B的栈顶
+;StackSpaceOfB   resb    1 * 1024
+;StackTopOfB:       ; 任务B的栈顶
 
 
 
@@ -36,7 +36,6 @@ StackTopOfB:       ; 任务B的栈顶
 global _start
 global clock
 global system_call
-global StackTop
 global task_a
 
 _start:
@@ -44,26 +43,39 @@ _start:
     jmp     SELECTOR_KERNEL_CS:init
 
 init:
-    call    clean_screen
-    mov     ax, 16
+    ;mov     ax, 0x10
+    ;mov     ds, ax
+    ;mov     fs, ax
+    mov     ax, 0x18
+    mov     gs, ax
+    mov     ax, 0x10
     mov     ss, ax
+    mov     ds, ax
+    mov     fs, ax
     mov     esp, StackTop
+
+    call    clean_screen
     push    helloword
+
     call    disp_str
     add     esp, 4
+
     cli
     call    cs_start
     sti
 
-    mov     ax, 0x20
-    ltr     ax
+    ;mov     ax, 0x20
+    ;ltr     ax
 
-    push    
-
-    
+restart:
+    push    ss
+    push    esp
+    pushf
+    push    cs
+    push    task_a
+    iretd
 
     ;jmp     task_a
-
     ;mov     eax, 'B'
     ;mov     ebx, 0x0A
     ;int     0x80
