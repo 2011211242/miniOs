@@ -6,15 +6,17 @@ extern system_call_message
 extern helloword
 extern disp_str
 extern clean_screen
-extern disp_pos
+;extern disp_pos
 extern start
 extern gdt_ptr
 extern gdt_init
 extern cs_start
 extern disp_char
 extern clock_handle
-
-
+extern disp_int
+extern sleep
+extern dec_disp_pos
+extern disp_ret
 
 
 SELECTOR_KERNEL_CS  equ 0x08
@@ -55,11 +57,18 @@ init:
     mov     esp, StackTop
 
     call    clean_screen
-    push    helloword
 
-    call    disp_str
+    ;push    helloword
+    ;call    disp_str
+    ;add     esp, 4
+
+    push    esp
+    call    disp_int
     add     esp, 4
 
+    push    0ah
+    call    disp_char
+    add     esp, 4
 
     cli
     call    cs_start
@@ -67,9 +76,9 @@ init:
     ltr     ax
     sti
 
-HLT:
-    hlt
-    jmp HLT
+;HLT:
+;    hlt
+;    jmp HLT
 
     ;mov     ax, 0x20
     ;ltr     ax
@@ -102,17 +111,42 @@ clock:
     iretd
 
 system_call:
-    push    ebx
+    ;push    ebx
+    ;push    eax
+    ;call    disp_char
+    ;add     esp, 8
+    ;call    dec_disp_pos
+    ;hlt
+    xor     eax, eax
+    mov     ax,  ss
     push    eax
-    call    disp_char
-    add     esp, 8
+    call    disp_int
+    add     esp, 4
+    call    disp_ret
+
+    xor     eax, eax
+    mov     ax, cs
+    push    eax
+    call    disp_int
+    add     esp, 4
+    call    disp_ret
+
+
+    ;call    dec_disp_pos
+    ;call    dec_disp_pos
+    ;call    dec_disp_pos
+    ;call    dec_disp_pos
+    ;call    dec_disp_pos
+    ;call    dec_disp_pos
     iretd
 
 
 task_a:
     mov     eax, 'A'
     mov     ebx, 0x0f
+    cli
     int     0x80
+    sti
 
     mov     ecx, 0xF
 loop_wait:
@@ -129,11 +163,10 @@ loop_wait_1:
     jmp task_a
 
 task_b:
-    
     mov     ax, 0x2b
     mov     ds, ax
-    mov     fs, ax
-    mov     es, ax
+    ;mov     fs, ax
+    ;mov     es, ax
 
     mov     ax,  0x33
     mov     gs, ax
@@ -143,20 +176,34 @@ task_b:
     mov     [gs:edi], ax
 
 
-task_b_loop:
-    add     edi, 2
-    mov     [gs:edi], ax
-    cmp     edi, 80 * 15 * 2
-    jz      task_b_end
-
-    jmp     task_b_loop
+;task_b_loop:
+;    add     edi, 2
+;    mov     [gs:edi], ax
+;    cmp     edi, 80 * 15 * 2
+;    jz      task_b_end
+;
+;    jmp     task_b_loop
 
 task_b_end:
-    jmp     $
+    ;mov     ax, disp_pos
+    xor     eax, eax
+    mov     ax, ss
+    push    eax
+    call    disp_int
+    add     esp, 4
+    call    disp_ret
+
+    xor     eax, eax
+    mov     ax, cs
+    push    eax
+    call    disp_int
+    add     esp, 4
+    call    disp_ret
 
     mov     eax, 'B'
     mov     ebx, 0x0A
     int     0x80
-    jmp     task_b
+    jmp     $
+    ;jmp     task_b_end
 
 

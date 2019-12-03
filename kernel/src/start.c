@@ -120,6 +120,10 @@ void gdt_init() {
 }
 
 void task0() {
+    for(int i = 0; i < 10; i++)
+    {
+
+    }
 }
 
 void task1() {
@@ -129,9 +133,13 @@ void task1() {
 void tss_init () {
     tss_test.ss0 = 0x10;
     tss_test.ss2 = 0x2b;
-    tss_test.esp0 = StackTop;
-    tss_test.esp2 = StackTop;
+    tss_test.esp0 = &StackTop;
+    tss_test.esp2 = &StackTop;
     tss_test.iobase = 0xffff;
+
+    //int a = &StackTop;
+    //disp_int(a);
+
     //memset(&process[0].tss, sizeof(process[0].tss), 0);
     //memset(&process[1].tss, sizeof(process[0].tss), 0);
 
@@ -179,18 +187,15 @@ static void init_idt_desc(unsigned char idx, unsigned char desc_type, int_handle
 }
 
 void idt_init() {
-    //init_idt_desc(0x20, DA_386IGate, clock, PRIVILEGE_KRNL);
+    init_idt_desc(0x20, DA_386IGate, clock, PRIVILEGE_KRNL);
     //init_idt_desc(0x80, DA_386IGate, system_call, PRIVILEGE_KRNL);
+    //init_idt_desc(0x20, DA_386IGate, clock, PRIVILEGE_USER);
 
-    init_idt_desc(0x20, DA_386IGate, clock, PRIVILEGE_USER);
     init_idt_desc(0x80, DA_386IGate, system_call, PRIVILEGE_USER);
 
     //GDT_INIT(&gdt[5], (int)process[0].ldts, sizeof(process[0].ldts), DA_LDT);   //LDT0 0x28
-
     //GDT_INIT(&gdt[6], (int)&process[1].tss, sizeof(process[1].tss), DA_386TSS); //TSS1 0x30
     //GDT_INIT(&gdt[7], (int)process[1].ldts, sizeof(process[1].ldts), DA_LDT);   //LDT1 0x38
-
-
 
     short* p_idt_limit = (short*)(&idt_ptr[0]);
     int* p_idt_base  = (int*)(&idt_ptr[2]);

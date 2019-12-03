@@ -3,6 +3,12 @@ char buf[128];
 char helloword[] = "Hello I am kernel\n";
 char system_call_message[] = "system call test\n";
 int disp_pos = 180 + 80 * 12;
+
+void disp_ret()
+{
+    disp_pos = (disp_pos / 80 + 1) * 80; 
+}
+
 void disp_char(char c, char font)
 {
     //asm("mov %1, %%al; \
@@ -40,6 +46,10 @@ void disp_char(char c, char font)
 
     if (disp_pos > 25 * 80)
         disp_pos = 0;
+}
+
+void dec_disp_pos() {
+    disp_pos --;
 }
 
 void clean_screen()
@@ -92,5 +102,14 @@ void disp_int(int a)
 {
     atoi(a, buf);
     disp_str(buf);
+}
+
+void sleep()
+{
+    int a = 0;
+    for(int i = 0; i < 10000; i++)
+    {
+        a++;
+    }
 }
 
