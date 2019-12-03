@@ -2,6 +2,7 @@
 #include <const.h>
 #include <message.h>
 
+extern int StackTop;
 char c_pos; 
 void clock();
 void system_call();
@@ -87,11 +88,20 @@ void GDT_INIT(GDT_DESCRIPTOR * GDT, int Base, int Limit, int Attr) {
 #define TSS1_SEL    0x30
 #define LDT1_SEL    0x38
 
+TSS tss_test;
+
 void gdt_init() {
     GDT_INIT(&gdt[0], 0x0, 0x0, 0x0); //0x00
     GDT_INIT(&gdt[1], 0x0, 0xfffff, DA_CR|DA_32|DA_LIMIT_4K); //0x08
     GDT_INIT(&gdt[2], 0x0, 0xfffff, DA_DRW|DA_32|DA_LIMIT_4K); //0x10
     GDT_INIT(&gdt[3], 0x0B8000, 0xffff, DA_DRW|DA_DPL3); //0x18
+
+    //GDT_INIT(&gdt[4], 0x0, 0xfffff, DA_CR|DA_32|DA_LIMIT_4K|DA_DPL3); //0x20
+    GDT_INIT(&gdt[4], 0x0, 0xfffff, DA_C|DA_32|DA_LIMIT_4K|DA_DPL3);    //0x23
+    GDT_INIT(&gdt[5], 0x0, 0xfffff, DA_DRW|DA_32|DA_LIMIT_4K|DA_DPL3);  //0x2b
+    GDT_INIT(&gdt[6], 0x0B8000, 0xffff, DA_DRW|DA_DPL3);                //0x33
+
+    GDT_INIT(&gdt[7], (int)&tss_test, sizeof(tss_test), DA_386TSS);          //0x38 tss
 
     //GDT_INIT(&gdt[4], (int)&process[0].tss, sizeof(process[0].tss), DA_386TSS); //TSS0 0x20
     //GDT_INIT(&gdt[5], (int)process[0].ldts, sizeof(process[0].ldts), DA_LDT);   //LDT0 0x28
@@ -115,10 +125,17 @@ void task0() {
 void task1() {
 }
 
+
 void tss_init () {
+    tss_test.ss0 = 0x10;
+    tss_test.ss2 = 0x2b;
+    tss_test.esp0 = StackTop;
+    tss_test.esp2 = StackTop;
+    tss_test.iobase = 0xffff;
     //memset(&process[0].tss, sizeof(process[0].tss), 0);
     //memset(&process[1].tss, sizeof(process[0].tss), 0);
 
+    /*
     process[0].tss.ss0 = 16;
     process[1].tss.ss0 = 16;
 
@@ -145,6 +162,7 @@ void tss_init () {
     process[1].tss.gs = 0x17;
     process[1].tss.ldt = LDT1_SEL;
     process[1].tss.iobase = sizeof(TSS);
+    */
 }
 
 typedef void (*int_handler) ();
@@ -161,9 +179,11 @@ static void init_idt_desc(unsigned char idx, unsigned char desc_type, int_handle
 }
 
 void idt_init() {
-    init_idt_desc(0x20, DA_386IGate, clock, PRIVILEGE_KRNL);
-    init_idt_desc(0x80, DA_386IGate, system_call, PRIVILEGE_KRNL);
+    //init_idt_desc(0x20, DA_386IGate, clock, PRIVILEGE_KRNL);
+    //init_idt_desc(0x80, DA_386IGate, system_call, PRIVILEGE_KRNL);
 
+    init_idt_desc(0x20, DA_386IGate, clock, PRIVILEGE_USER);
+    init_idt_desc(0x80, DA_386IGate, system_call, PRIVILEGE_USER);
 
     //GDT_INIT(&gdt[5], (int)process[0].ldts, sizeof(process[0].ldts), DA_LDT);   //LDT0 0x28
 
@@ -247,7 +267,7 @@ void init_8253A()
 }
 
 void cs_start(){
-    //tss_init();
+    tss_init();
     init_8253A();
     init_8295A();
     idt_init();
