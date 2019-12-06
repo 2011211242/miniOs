@@ -3,6 +3,7 @@
 #include <message.h>
 
 extern int StackTop;
+extern int UserStackTop;
 char c_pos; 
 void clock();
 void system_call();
@@ -134,7 +135,7 @@ void tss_init () {
     tss_test.ss0 = 0x10;
     tss_test.ss2 = 0x2b;
     tss_test.esp0 = &StackTop;
-    tss_test.esp2 = &StackTop;
+    tss_test.esp2 = &UserStackTop;
     tss_test.iobase = 0xffff;
 
     //int a = &StackTop;

@@ -26,6 +26,9 @@ SELECTOR_KERNEL_CS  equ 0x08
 StackSpace      resb    2 * 1024
 StackTop:       ; 栈顶
 
+UserStackSpace      resb    2 * 1024
+UserStackTop:       ; 栈顶
+
 ;StackSpaceOfA   resb    1 * 1024
 ;StackTopOfA:       ;任务A的栈顶
 
@@ -33,6 +36,8 @@ StackTop:       ; 栈顶
 ;StackTopOfB:       ; 任务B的栈顶
 
 global StackTop
+global UserStackTop
+
 
 [section .text]
 global _start
@@ -62,19 +67,15 @@ init:
     ;call    disp_str
     ;add     esp, 4
 
-    push    esp
-    call    disp_int
-    add     esp, 4
+    ;push    esp
+    ;call    disp_int
+    ;add     esp, 4
 
-    push    0ah
-    call    disp_char
-    add     esp, 4
+    ;push    0ah
+    ;call    disp_char
+    ;add     esp, 4
 
-    cli
-    call    cs_start
-    mov     ax, 0x38
-    ltr     ax
-    sti
+
 
 ;HLT:
 ;    hlt
@@ -84,61 +85,86 @@ init:
     ;ltr     ax
 
 go_ring3:
+    cli
+    call    cs_start
+    mov     ax, 0x38
+    ltr     ax
+    sti
+
     push    0x2b
-    push    esp
+    push    UserStackTop
     pushf
     push    0x23
     push    task_b
-    iretd
 
-    ;jmp     task_a
-    ;mov     eax, 'B'
-    ;mov     ebx, 0x0A
-    ;int     0x80
-
-;HLT:
-;    hlt
-;    jmp HLT
+    iret
 
 clock:
-    ;push    0Ah
-    ;push    'B'
-    ;call    disp_char
-    ;add     esp, 8
-    call    clock_handle
+    cli
+    pushad
+    push    ds
+    push    es
+    push    fs
+    push    gs
+
+    
+    xor     eax, eax
+    mov     eax, ss
+    push    eax
+    call    disp_int
+    add     esp, 4
+    call    disp_ret
+
+
+    push    esp
+    call    disp_int
+    add     esp, 4
+    call    disp_ret
+
+    ;call    clock_handle
+    
+    ;mov     ecx, 0xff
+;clock_loop_wait:
+;    loop    clock_loop_wait
+
+    pop     gs
+    pop     fs
+    pop     es
+    pop     ds
+    popad
+
     mov     al, 20h
     out     20h, al
-    iretd
+    nop
+    nop
+    nop
+    nop
+    iret
 
 system_call:
-    ;push    ebx
-    ;push    eax
-    ;call    disp_char
+    cli
+
+    pushad
+    push    ds
+    push    es
+    push    fs
+    push    gs
+
+    push    ebx
+    push    eax
+    call    disp_char
+    pop     eax
+    pop     ebx
     ;add     esp, 8
-    ;call    dec_disp_pos
-    ;hlt
-    xor     eax, eax
-    mov     ax,  ss
-    push    eax
-    call    disp_int
-    add     esp, 4
-    call    disp_ret
-
-    xor     eax, eax
-    mov     ax, cs
-    push    eax
-    call    disp_int
-    add     esp, 4
-    call    disp_ret
 
 
-    ;call    dec_disp_pos
-    ;call    dec_disp_pos
-    ;call    dec_disp_pos
-    ;call    dec_disp_pos
-    ;call    dec_disp_pos
-    ;call    dec_disp_pos
-    iretd
+    pop     gs
+    pop     fs
+    pop     es
+    pop     ds
+    popad
+
+    iret
 
 
 task_a:
@@ -146,7 +172,7 @@ task_a:
     mov     ebx, 0x0f
     cli
     int     0x80
-    sti
+    ;sti
 
     mov     ecx, 0xF
 loop_wait:
@@ -165,8 +191,8 @@ loop_wait_1:
 task_b:
     mov     ax, 0x2b
     mov     ds, ax
-    ;mov     fs, ax
-    ;mov     es, ax
+    mov     fs, ax
+    mov     es, ax
 
     mov     ax,  0x33
     mov     gs, ax
@@ -174,6 +200,7 @@ task_b:
     mov     ah, 0Ch
     mov     al, '3'
     mov     [gs:edi], ax
+    call    sleep
 
 
 ;task_b_loop:
@@ -202,8 +229,23 @@ task_b_end:
 
     mov     eax, 'B'
     mov     ebx, 0x0A
-    int     0x80
-    jmp     $
+
+sys_call:
+    cmp     esp, 213056
+    jnz      sys_call
+    push    esp
+    nop
+    ;call    disp_int
+    nop
+    add     esp, 4
+    nop
+    nop
+    nop
+    ;call    disp_ret
+    ;call    sleep
+    nop
+    nop
+    jmp     sys_call
     ;jmp     task_b_end
 
 

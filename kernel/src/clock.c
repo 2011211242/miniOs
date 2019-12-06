@@ -1,25 +1,26 @@
 extern int disp_pos;
 void disp_char(char, char font);
 
-#define MAX_TIME_COUNT 25
+#define MAX_TIME_COUNT 8
 
-void clock_handle(){
+void clock_handle() {
+    /*
     static int time_count = MAX_TIME_COUNT;
     static char ch = 'A';
     //disp_pos = 120;
 
     
     int pos = 120;
-    char font = 0x0A;
+    char font = 0x0C; //0x0A;
     if (time_count >= MAX_TIME_COUNT)
     {
-        asm("mov %0, %%al; \
+        asm ("mov %0, %%al; \
                 mov %1, %%ah; \
                 mov %2, %%esi; \
                 mov %%ax, %%gs:(, %%esi, 2);"
                 :
-                :"r"(ch), "r"(font), "r"(pos)      /*输出部*/
-                :"%eax", "%esi"             /*毁坏部*/
+                :"r"(ch), "r"(font), "r"(pos)      //输出部
+                :"%eax", "%esi"             //毁坏部
            );
 
 
@@ -30,4 +31,5 @@ void clock_handle(){
 
     }
     time_count++;
+    */
 }

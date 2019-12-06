@@ -7,6 +7,8 @@ int disp_pos = 180 + 80 * 12;
 void disp_ret()
 {
     disp_pos = (disp_pos / 80 + 1) * 80; 
+    if (disp_pos >= 25 * 80)
+        disp_pos = 0;
 }
 
 void disp_char(char c, char font)
@@ -44,7 +46,7 @@ void disp_char(char c, char font)
             break;
     }
 
-    if (disp_pos > 25 * 80)
+    if (disp_pos >= 25 * 80)
         disp_pos = 0;
 }
 
@@ -88,6 +90,8 @@ void str_reverse(char * buf, int size)
 void atoi(int a, char * buf)
 {
     int i = 0;
+    if (a == 0) buf[i++] = a % 10 + '0';
+
     while(a > 0)
     {
         buf[i] = a % 10 + '0';
@@ -106,10 +110,14 @@ void disp_int(int a)
 
 void sleep()
 {
+    //clean_screen();
     int a = 0;
-    for(int i = 0; i < 10000; i++)
+    for(int i = 0; i < 0xFFFFF; i++)
     {
         a++;
     }
+
+    //disp_int(a);
+    //disp_ret();
 }
 
