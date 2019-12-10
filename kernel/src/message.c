@@ -112,7 +112,7 @@ void sleep()
 {
     //clean_screen();
     int a = 0;
-    for(int i = 0; i < 0xFFFFF; i++)
+    for(int i = 0; i < 0xFFFFFF; i++)
     {
         a++;
     }

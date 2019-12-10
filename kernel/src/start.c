@@ -130,12 +130,26 @@ void task0() {
 void task1() {
 }
 
+char stack_kernel[1024];
+char stack_user[1024];
+
+void get_stk_krn()
+{
+    int p = (int)stack_kernel + sizeof(stack_kernel);
+    asm("mov %%eax, %0"::"r"(p):);
+}
+
+void get_stk_usr()
+{
+    int p = (int)stack_user + sizeof(stack_user);
+    asm("mov %%eax, %0"::"r"(p):);
+}
 
 void tss_init () {
     tss_test.ss0 = 0x10;
-    tss_test.ss2 = 0x2b;
-    tss_test.esp0 = &StackTop;
-    tss_test.esp2 = &UserStackTop;
+    //tss_test.ss2 = 0x2b;
+    tss_test.esp0 = (int)stack_kernel + sizeof(stack_kernel);
+    //tss_test.esp2 = (int)stack_user + sizeof(stack_user);
     tss_test.iobase = 0xffff;
 
     //int a = &StackTop;

@@ -4,7 +4,6 @@ void disp_char(char, char font);
 #define MAX_TIME_COUNT 8
 
 void clock_handle() {
-    /*
     static int time_count = MAX_TIME_COUNT;
     static char ch = 'A';
     //disp_pos = 120;
@@ -31,5 +30,4 @@ void clock_handle() {
 
     }
     time_count++;
-    */
 }

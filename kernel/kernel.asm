@@ -17,6 +17,8 @@ extern disp_int
 extern sleep
 extern dec_disp_pos
 extern disp_ret
+extern get_stk_krn
+extern get_stk_usr
 
 
 SELECTOR_KERNEL_CS  equ 0x08
@@ -59,7 +61,8 @@ init:
     mov     ss, ax
     mov     ds, ax
     mov     fs, ax
-    mov     esp, StackTop
+    call    get_stk_krn
+    mov     esp, eax
 
     call    clean_screen
 
@@ -92,11 +95,11 @@ go_ring3:
     sti
 
     push    0x2b
-    push    UserStackTop
+    call    get_stk_usr
+    push    eax
     pushf
     push    0x23
     push    task_b
-
     iret
 
 clock:
@@ -108,21 +111,20 @@ clock:
     push    gs
 
     
-    xor     eax, eax
-    mov     eax, ss
-    push    eax
-    call    disp_int
-    add     esp, 4
-    call    disp_ret
+    ;xor     eax, eax
+    ;mov     eax, ss
+    ;push    eax
+    ;call    disp_int
+    ;add     esp, 4
+    ;call    disp_ret
 
 
-    push    esp
-    call    disp_int
-    add     esp, 4
-    call    disp_ret
+    ;push    esp
+    ;call    disp_int
+    ;add     esp, 4
+    ;call    disp_ret
 
-    ;call    clock_handle
-    
+    call    clock_handle
     ;mov     ecx, 0xff
 ;clock_loop_wait:
 ;    loop    clock_loop_wait
@@ -135,10 +137,6 @@ clock:
 
     mov     al, 20h
     out     20h, al
-    nop
-    nop
-    nop
-    nop
     iret
 
 system_call:
@@ -198,9 +196,9 @@ task_b:
     mov     gs, ax
     mov     edi, (80 * 14 + 0) * 2
     mov     ah, 0Ch
-    mov     al, '3'
+    mov     al, '4'
     mov     [gs:edi], ax
-    call    sleep
+    ;call    sleep
 
 
 ;task_b_loop:
@@ -232,19 +230,12 @@ task_b_end:
 
 sys_call:
     cmp     esp, 213056
-    jnz      sys_call
+    ;jnz      sys_call
     push    esp
-    nop
-    ;call    disp_int
-    nop
+    call    disp_int
     add     esp, 4
-    nop
-    nop
-    nop
-    ;call    disp_ret
-    ;call    sleep
-    nop
-    nop
+    call    disp_ret
+    call    sleep
     jmp     sys_call
     ;jmp     task_b_end
 
