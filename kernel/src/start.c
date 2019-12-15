@@ -2,6 +2,7 @@
 #include <const.h>
 #include <message.h>
 
+extern int disp_pos;
 extern int StackTop;
 extern int UserStackTop;
 char c_pos; 
@@ -10,17 +11,6 @@ void system_call();
 void task_a();
 void disp_char_int(int disp_pos, char c, char font)
 {
-    //asm("mov %1, %%al; \
-    //            mov $0xef, %%ah; \
-    //            mov %2, %%esi; \
-    //            mov %%ax, %%gs:(, %%esi, 2); \
-    //            add $0x01, %%esi; \
-    //            mov %%esi, %0;"
-    //            :"=r"(disp_pos)
-    //            :"r"(c), "r"(disp_pos)      /*输出部*/
-    //            :"%eax", "%esi"             /*毁坏部*/
-    //       );
-
     switch (c)
     {
         case '\0':  
@@ -46,27 +36,6 @@ void disp_char_int(int disp_pos, char c, char font)
     if (disp_pos > 25 * 80)
         disp_pos = 25 * 80;
 }
-
-/*
-void clock()
-{
-    int disp_pos = 100;
-    disp_char_int(disp_pos, c, 0x0f);
-    c = c + 1;
-    //if (c >= 'z') c = 'a';
-
-    for(int i = 0; i < 1000; i++)
-    {
-        asm("nop":::);
-    }
-    disp_pos += 100;
-    disp_char_int(disp_pos, c, 0x0f);
-    //while(1);
-    //if (c == 'b') asm("jmp $":::);
-    asm("hlt":::);
-
-}
-*/
 
 static  char    gdt_ptr[6];
 static  GDT_DESCRIPTOR gdt[GDT_SIZE];
@@ -149,7 +118,7 @@ void tss_init () {
     tss_test.ss0 = 0x10;
     //tss_test.ss2 = 0x2b;
     tss_test.esp0 = (int)stack_kernel + sizeof(stack_kernel);
-    //tss_test.esp2 = (int)stack_user + sizeof(stack_user);
+    tss_test.esp2 = (int)stack_user + sizeof(stack_user);
     tss_test.iobase = 0xffff;
 
     //int a = &StackTop;

@@ -4,6 +4,7 @@ char helloword[] = "Hello I am kernel\n";
 char system_call_message[] = "system call test\n";
 int disp_pos = 180 + 80 * 12;
 
+
 void disp_ret()
 {
     disp_pos = (disp_pos / 80 + 1) * 80; 
@@ -112,7 +113,7 @@ void sleep()
 {
     //clean_screen();
     int a = 0;
-    for(int i = 0; i < 0xFFFFFF; i++)
+    for(int i = 0; i < 0xFFFF; i++)
     {
         a++;
     }

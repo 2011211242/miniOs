@@ -2,11 +2,13 @@
 ;extern KernelMessage             db  "I am Kernel started ...", 0AH
 ;extern KernelMessageLen          equ  $-KernelMessage             
 
+;import disp_pos
+
 extern system_call_message
 extern helloword
 extern disp_str
 extern clean_screen
-;extern disp_pos
+extern disp_pos
 extern start
 extern gdt_ptr
 extern gdt_init
@@ -24,22 +26,11 @@ extern get_stk_usr
 SELECTOR_KERNEL_CS  equ 0x08
 
 ;times 1024 db 0
-[SECTION .bss]
-StackSpace      resb    2 * 1024
-StackTop:       ; 栈顶
-
-UserStackSpace      resb    2 * 1024
-UserStackTop:       ; 栈顶
-
 ;StackSpaceOfA   resb    1 * 1024
 ;StackTopOfA:       ;任务A的栈顶
 
 ;StackSpaceOfB   resb    1 * 1024
 ;StackTopOfB:       ; 任务B的栈顶
-
-global StackTop
-global UserStackTop
-
 
 [section .text]
 global _start
@@ -52,40 +43,17 @@ _start:
     jmp     SELECTOR_KERNEL_CS:init
 
 init:
-    ;mov     ax, 0x10
-    ;mov     ds, ax
-    ;mov     fs, ax
     mov     ax, 0x18
     mov     gs, ax
     mov     ax, 0x10
     mov     ss, ax
     mov     ds, ax
     mov     fs, ax
+
     call    get_stk_krn
     mov     esp, eax
 
     call    clean_screen
-
-    ;push    helloword
-    ;call    disp_str
-    ;add     esp, 4
-
-    ;push    esp
-    ;call    disp_int
-    ;add     esp, 4
-
-    ;push    0ah
-    ;call    disp_char
-    ;add     esp, 4
-
-
-
-;HLT:
-;    hlt
-;    jmp HLT
-
-    ;mov     ax, 0x20
-    ;ltr     ax
 
 go_ring3:
     cli
@@ -103,31 +71,13 @@ go_ring3:
     iret
 
 clock:
-    cli
     pushad
     push    ds
     push    es
     push    fs
     push    gs
 
-    
-    ;xor     eax, eax
-    ;mov     eax, ss
-    ;push    eax
-    ;call    disp_int
-    ;add     esp, 4
-    ;call    disp_ret
-
-
-    ;push    esp
-    ;call    disp_int
-    ;add     esp, 4
-    ;call    disp_ret
-
     call    clock_handle
-    ;mov     ecx, 0xff
-;clock_loop_wait:
-;    loop    clock_loop_wait
 
     pop     gs
     pop     fs
@@ -140,8 +90,6 @@ clock:
     iret
 
 system_call:
-    cli
-
     pushad
     push    ds
     push    es
@@ -153,8 +101,6 @@ system_call:
     call    disp_char
     pop     eax
     pop     ebx
-    ;add     esp, 8
-
 
     pop     gs
     pop     fs
@@ -170,7 +116,6 @@ task_a:
     mov     ebx, 0x0f
     cli
     int     0x80
-    ;sti
 
     mov     ecx, 0xF
 loop_wait:
@@ -198,19 +143,7 @@ task_b:
     mov     ah, 0Ch
     mov     al, '4'
     mov     [gs:edi], ax
-    ;call    sleep
-
-
-;task_b_loop:
-;    add     edi, 2
-;    mov     [gs:edi], ax
-;    cmp     edi, 80 * 15 * 2
-;    jz      task_b_end
-;
-;    jmp     task_b_loop
-
 task_b_end:
-    ;mov     ax, disp_pos
     xor     eax, eax
     mov     ax, ss
     push    eax
@@ -229,14 +162,19 @@ task_b_end:
     mov     ebx, 0x0A
 
 sys_call:
-    cmp     esp, 213056
-    ;jnz      sys_call
-    push    esp
+    mov     eax, [disp_pos]
+    add     eax, 1
+    mov     [disp_pos], eax
+    push    StackTop
     call    disp_int
     add     esp, 4
-    call    disp_ret
     call    sleep
     jmp     sys_call
-    ;jmp     task_b_end
 
+[SECTION .bss]
+StackSpace      resb    2 * 1024
+StackTop:       ; 栈顶
+
+UserStackSpace      resb    2 * 1024
+UserStackTop:       ; 栈顶
 
